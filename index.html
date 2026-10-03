@@ -62,235 +62,33 @@
     <!-- Navigation Phase Tabs -->
     <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto">
-            <button onclick="switchTab('phase1')" id="btn-phase1" class="tab-btn px-6 py-3 font-bold text-sm border-b-2 border-brand-accent text-brand-accent flex items-center gap-2 whitespace-nowrap transition-all">
+            <button onclick="switchPhase(1)" id="btn-phase1" class="tab-btn px-6 py-3 font-bold text-sm border-b-2 border-brand-accent text-brand-accent flex items-center gap-2 whitespace-nowrap transition-all">
                 <i class="fa-solid fa-layer-group"></i> Phase 1: Master Planning
             </button>
-            <button onclick="switchTab('phase2')" id="btn-phase2" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
+            <button onclick="switchPhase(2)" id="btn-phase2" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
                 <i class="fa-solid fa-play"></i> Phase 2: Execution & Productivity
             </button>
-            <button onclick="switchTab('phase3')" id="btn-phase3" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
+            <button onclick="switchPhase(3)" id="btn-phase3" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
                 <i class="fa-solid fa-chart-line"></i> Phase 3: Monitoring & Field Logs
             </button>
         </div>
     </nav>
 
     <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
 
-        <!-- ========================================== -->
-        <!-- PHASE 1: MASTER PLANNING                   -->
-        <!-- ========================================== -->
-        <section id="phase1" class="tab-content active space-y-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Master Baseline & Structural Setup</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Manage Categories, Tasks, and Subtasks. Fully functional inputs for estimates, crew, and dates.</p>
-                </div>
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <button onclick="openCategoryModal()" class="bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center gap-2">
-                        <i class="fa-solid fa-folder-plus"></i> Add Category / Task
-                    </button>
-                </div>
-            </div>
+        <!-- Main Task Input Card (Phase 1 Only) -->
+        <div id="taskCreationCard" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
+            <input type="text" id="mainTaskInput" placeholder="Enter new main category name & press Enter..." class="flex-grow border border-slate-300 rounded-lg px-4 py-2 text-xs focus:ring-2 focus:ring-brand-accent outline-none">
+            <button onclick="addMainTask()" class="bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition whitespace-nowrap">
+                <i class="fa-solid fa-folder-plus mr-1"></i> Add Category
+            </button>
+        </div>
 
-            <!-- Master Data Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                            <tr>
-                                <th class="p-3">Category / Subtask Name</th>
-                                <th class="p-3 text-center">Unit</th>
-                                <th class="p-3 text-right">Est. Qty (Manual)</th>
-                                <th class="p-3 text-right">Productivity</th>
-                                <th class="p-3 text-right">Total Crew</th>
-                                <th class="p-3 text-right">Total Days</th>
-                                <th class="p-3">Start Date</th>
-                                <th class="p-3">End Date (Auto)</th>
-                                <th class="p-3 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="master-table-body" class="divide-y divide-slate-100">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- PHASE 2: EXECUTION & PRODUCTIVITY          -->
-        <!-- ========================================== -->
-        <section id="phase2" class="tab-content space-y-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Real-Time Execution & PWDM Assessment</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Category mean rollups, execution productivity, and real-time performance tracking.</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                            <tr>
-                                <th class="p-3">Category / Subtask (Mean Rollup)</th>
-                                <th class="p-3 text-right">Delivered Qty</th>
-                                <th class="p-3 text-right">Actual Crew</th>
-                                <th class="p-3">Actual Window (Start - Latest)</th>
-                                <th class="p-3 text-right">Exec Prod</th>
-                                <th class="p-3 text-center">PWDM Index</th>
-                                <th class="p-3">Timeline & Performance Bar Chart</th>
-                            </tr>
-                        </thead>
-                        <tbody id="execution-table-body" class="divide-y divide-slate-100">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- PHASE 3: MONITORING & FIELD LOGS           -->
-        <!-- ========================================== -->
-        <section id="phase3" class="tab-content space-y-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Field Logging & Audit Trail</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Record date-wise quantities and active crew deployed with full audit history dropdowns.</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                            <tr>
-                                <th class="p-3">Subtask Name</th>
-                                <th class="p-3 text-right">Total Delivered Qty</th>
-                                <th class="p-3 text-right">Latest Crew / Active</th>
-                                <th class="p-3 text-center">Date-Wise Audit Logs</th>
-                                <th class="p-3 text-center">Action / Log Entry</th>
-                            </tr>
-                        </thead>
-                        <tbody id="monitoring-table-body" class="divide-y divide-slate-100">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+        <!-- Workspace Board -->
+        <div id="workspaceBoard" class="space-y-6"></div>
 
     </main>
-
-    <!-- ========================================== -->
-    <!-- MODALS                                     -->
-    <!-- ========================================== -->
-
-    <!-- Category / Subtask Modal -->
-    <div id="category-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 id="modal-title" class="text-base font-bold text-slate-900">Add New Master Task / Subtask</h3>
-                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="category-form" onsubmit="handleMasterFormSubmit(event)" class="space-y-4 text-xs">
-                <input type="hidden" id="item-id">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Item Type</label>
-                        <select id="item-type" onchange="toggleItemTypeFields()" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent">
-                            <option value="subtask">Subtask (Task Item)</option>
-                            <option value="category">Main Category</option>
-                        </select>
-                    </div>
-                    <div id="parent-category-container">
-                        <label class="block font-semibold text-slate-700 mb-1">Parent Category</label>
-                        <select id="parent-category-id" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent"></select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Name</label>
-                    <input type="text" id="item-name" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent" placeholder="e.g., Foundation Excavation">
-                </div>
-
-                <div id="subtask-specific-fields" class="space-y-4 border-t border-slate-100 pt-3">
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Unit</label>
-                            <input type="text" id="item-unit" class="w-full border border-slate-300 rounded-lg p-2" value="m3">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Est. Qty (Manual)</label>
-                            <input type="number" step="any" id="item-est-qty" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="1000">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Productivity</label>
-                            <input type="number" step="any" id="item-productivity" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="20">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Total Crew</label>
-                            <input type="number" id="item-crew" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="10">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Total Days (Auto)</label>
-                            <input type="number" id="item-days" disabled class="w-full border border-slate-200 bg-slate-50 text-slate-600 rounded-lg p-2" value="5">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Start Date</label>
-                            <input type="date" id="item-start-date" onchange="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">End Date (Auto)</label>
-                            <input type="date" id="item-end-date" disabled class="w-full border border-slate-200 bg-slate-50 text-slate-500 rounded-lg p-2">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-brand-accent text-white rounded-lg font-semibold hover:bg-blue-600">Save Item</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Field Log Modal -->
-    <div id="field-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 class="text-base font-bold text-slate-900">Record Field Log (Date-Wise)</h3>
-                <button onclick="closeFieldLogModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="field-log-form" onsubmit="handleFieldLogSubmit(event)" class="space-y-4 text-xs">
-                <input type="hidden" id="log-subtask-id">
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Log Date</label>
-                    <input type="date" id="log-date" required class="w-full border border-slate-300 rounded-lg p-2">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Delivered Quantity (for this date)</label>
-                    <input type="number" step="any" id="log-qty" required class="w-full border border-slate-300 rounded-lg p-2" value="0">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Workers / Crew Deployed</label>
-                    <input type="number" id="log-crew" required class="w-full border border-slate-300 rounded-lg p-2" value="0">
-                </div>
-                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeFieldLogModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-brand-accent text-white rounded-lg font-semibold hover:bg-blue-600">Submit Log</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Audit History Modal -->
     <div id="audit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
@@ -309,343 +107,206 @@
                             <th class="p-2 text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="audit-table-body" class="divide-y divide-slate-100">
-                        <!-- Populated dynamically -->
-                    </tbody>
+                    <tbody id="audit-table-body" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Application JavaScript Core -->
-    <script>
-        // Global State Store with Initial Starter Data
-        let appData = {
-            categories: [
-                { id: 'cat-1', name: '1. Civil & Earthworks' },
-                { id: 'cat-2', name: '2. Structural Framework' }
-            ],
-            subtasks: [
-                { 
-                    id: 'sub-1', categoryId: 'cat-1', name: 'Site Excavation', unit: 'm3', estQty: 1000, productivity: 20, totalCrew: 10, totalDays: 5, startDate: '2026-06-01', endDate: '2026-06-06',
-                    logs: [
-                        { id: 'l-1', date: '2026-06-01', qty: 200, crew: 10 },
-                        { id: 'l-2', date: '2026-06-02', qty: 300, crew: 10 }
-                    ]
-                }
-            ]
-        };
+    <!-- Field Log Input Modal -->
+    <div id="field-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-base font-bold text-slate-900">Record Field Log (Date-Wise)</h3>
+                <button onclick="closeFieldLogModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="field-log-form" onsubmit="handleFieldLogSubmit(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="log-subtask-id">
+                <input type="hidden" id="log-task-id">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Log Date</label>
+                    <input type="date" id="log-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Delivered Quantity</label>
+                    <input type="number" step="any" id="log-qty" required class="w-full border border-slate-300 rounded-lg p-2" value="0">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Workers / Crew Deployed</label>
+                    <input type="number" id="log-crew" required class="w-full border border-slate-300 rounded-lg p-2" value="0">
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeFieldLogModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-accent text-white rounded-lg font-semibold hover:bg-blue-600">Submit Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('border-brand-accent', 'text-brand-accent');
-                el.classList.add('border-transparent', 'text-slate-500');
-            });
-            document.getElementById(tabId).classList.add('active');
-            const activeBtn = document.getElementById(`btn-${tabId}`);
-            activeBtn.classList.remove('border-transparent', 'text-slate-500');
-            activeBtn.classList.add('border-brand-accent', 'text-brand-accent');
-            renderAllViews();
+    <!-- Application Script -->
+    <script>
+        const SUPABASE_URL = 'https://nudhzvzmhzghznmpavif.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZGh6dnptaHpnaHpubXBhdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTQ0MzQsImV4cCI6MjEwNjU5MDQzNH0.3Nm6yvvD1x2wfLbAX_4bc8EjKuev8Kkl-oIpzZvBoBc';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let tasks = [];
+        let currentPhase = 1;
+
+        async function loadTasksFromCloud() {
+            const { data, error } = await _supabase.from('tasks').select('*');
+            if (error) {
+                console.error('Error loading tasks:', error.message);
+            } else {
+                tasks = data || [];
+                renderWorkspace();
+            }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            renderAllViews();
+        async function syncToCloud() {
+            if (tasks.length === 0) return;
+            const cleanTasks = tasks.map(t => ({
+                id: Number(t.id),
+                name: String(t.name),
+                subtasks: t.subtasks || []
+            }));
+            const { error } = await _supabase.from('tasks').upsert(cleanTasks);
+            if (error) console.error('Sync failed:', error.message);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainInput = document.getElementById('mainTaskInput');
+            if (mainInput) {
+                mainInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') addMainTask();
+                });
+            }
+            loadTasksFromCloud();
         });
 
-        function renderAllViews() {
-            renderMasterTable();
-            renderExecutionTable();
-            renderMonitoringTable();
-        }
-
-        // ================= PHASE 1 =================
-        function renderMasterTable() {
-            const tbody = document.getElementById('master-table-body');
-            tbody.innerHTML = '';
-
-            appData.categories.forEach(cat => {
-                const catRow = document.createElement('tr');
-                catRow.className = 'bg-slate-100 font-bold text-slate-900 border-t border-slate-200';
-                catRow.innerHTML = `
-                    <td class="p-3" colspan="8"><i class="fa-solid fa-folder text-brand-accent mr-2"></i> ${cat.name}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="deleteMasterItem('${cat.id}', 'category')" class="text-rose-500 hover:text-rose-700" title="Delete Category"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(catRow);
-
-                const subs = appData.subtasks.filter(s => s.categoryId === cat.id);
-                if (subs.length === 0) {
-                    const emptyRow = document.createElement('tr');
-                    emptyRow.innerHTML = `<td colspan="9" class="p-3 text-center text-slate-400 italic">No subtasks under this category. Click 'Add Category / Task' to create one.</td>`;
-                    tbody.appendChild(emptyRow);
-                } else {
-                    subs.forEach(sub => {
-                        const subRow = document.createElement('tr');
-                        subRow.className = 'hover:bg-slate-50/80 transition';
-                        subRow.innerHTML = `
-                            <td class="p-3 pl-6 font-medium text-slate-700"><i class="fa-solid fa-arrow-turn-down text-slate-400 mr-2"></i>${sub.name}</td>
-                            <td class="p-3 text-center text-slate-500">${sub.unit || '-'}</td>
-                            <td class="p-3 text-right font-semibold text-slate-900">${sub.estQty}</td>
-                            <td class="p-3 text-right text-slate-600">${sub.productivity}</td>
-                            <td class="p-3 text-right text-slate-600">${sub.totalCrew}</td>
-                            <td class="p-3 text-right text-slate-600">${sub.totalDays}</td>
-                            <td class="p-3 text-slate-600">${sub.startDate || '-'}</td>
-                            <td class="p-3 text-slate-600 font-semibold">${sub.endDate || '-'}</td>
-                            <td class="p-3 text-center flex justify-center gap-2">
-                                <button onclick="openCategoryModal('${sub.id}')" class="text-blue-500 hover:text-blue-700" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteMasterItem('${sub.id}', 'subtask')" class="text-rose-500 hover:text-rose-700" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                            </td>
-                        `;
-                        tbody.appendChild(subRow);
-                    });
-                }
+        function switchPhase(phaseNum) {
+            currentPhase = phaseNum;
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('border-brand-accent', idx + 1 === phaseNum);
+                btn.classList.toggle('text-brand-accent', idx + 1 === phaseNum);
+                btn.classList.toggle('border-transparent', idx + 1 !== phaseNum);
+                btn.classList.toggle('text-slate-500', idx + 1 !== phaseNum);
             });
-        }
-
-        function openCategoryModal(subId = null) {
-            document.getElementById('category-modal').classList.remove('hidden');
-            const parentSelect = document.getElementById('parent-category-id');
-            parentSelect.innerHTML = appData.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-
-            if (subId) {
-                document.getElementById('modal-title').textContent = 'Edit Master Subtask';
-                document.getElementById('item-type').value = 'subtask';
-                document.getElementById('item-id').value = subId;
-                const sub = appData.subtasks.find(s => s.id === subId);
-                if (sub) {
-                    document.getElementById('parent-category-id').value = sub.categoryId;
-                    document.getElementById('item-name').value = sub.name;
-                    document.getElementById('item-unit').value = sub.unit;
-                    document.getElementById('item-est-qty').value = sub.estQty;
-                    document.getElementById('item-productivity').value = sub.productivity;
-                    document.getElementById('item-crew').value = sub.totalCrew;
-                    document.getElementById('item-days').value = sub.totalDays;
-                    document.getElementById('item-start-date').value = sub.startDate;
-                }
-            } else {
-                document.getElementById('modal-title').textContent = 'Add New Master Task / Subtask';
-                document.getElementById('item-type').value = 'subtask';
-                document.getElementById('item-id').value = '';
-                document.getElementById('item-name').value = '';
-                document.getElementById('item-unit').value = 'm3';
-                document.getElementById('item-est-qty').value = 500;
-                document.getElementById('item-productivity').value = 20;
-                document.getElementById('item-crew').value = 10;
-                document.getElementById('item-days').value = 5;
-                document.getElementById('item-start-date').value = new Date().toISOString().split('T')[0];
+            const taskCreationCard = document.getElementById('taskCreationCard');
+            if (taskCreationCard) {
+                taskCreationCard.style.display = (phaseNum === 1) ? 'flex' : 'none';
             }
-            toggleItemTypeFields();
-            recalculateMasterForm();
+            renderWorkspace();
         }
 
-        function closeCategoryModal() {
-            document.getElementById('category-modal').classList.add('hidden');
+        async function addMainTask() {
+            const input = document.getElementById('mainTaskInput');
+            if (!input) return;
+            const name = input.value.trim();
+            if (!name) return;
+
+            const newTask = { id: Date.now(), name: name, subtasks: [] };
+            tasks.push(newTask);
+            input.value = '';
+            await syncToCloud();
+            renderWorkspace();
         }
 
-        function toggleItemTypeFields() {
-            const type = document.getElementById('item-type').value;
-            const subFields = document.getElementById('subtask-specific-fields');
-            const parentContainer = document.getElementById('parent-category-container');
-            if (type === 'category') {
-                subFields.classList.add('hidden');
-                parentContainer.classList.add('hidden');
-            } else {
-                subFields.classList.remove('hidden');
-                parentContainer.classList.remove('hidden');
+        async function deleteMainTask(id) {
+            if (confirm("Are you sure you want to delete this category and all its subtasks?")) {
+                tasks = tasks.filter(t => t.id !== id);
+                await _supabase.from('tasks').delete().eq('id', id);
+                renderWorkspace();
             }
         }
 
-        function recalculateMasterForm() {
-            const qty = parseFloat(document.getElementById('item-est-qty').value) || 0;
-            const prod = parseFloat(document.getElementById('item-productivity').value) || 1;
-            const crew = parseFloat(document.getElementById('item-crew').value) || 1;
-            let days = 1;
+        async function addSubtask(mainTaskId) {
+            const nameInput = document.getElementById(`subName-${mainTaskId}`);
+            const qtyInput = document.getElementById(`subQty-${mainTaskId}`);
+            const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
+            const prodInput = document.getElementById(`subProd-${mainTaskId}`);
+            const daysInput = document.getElementById(`subDays-${mainTaskId}`);
+            const crewInput = document.getElementById(`subCrew-${mainTaskId}`);
+            const startInput = document.getElementById(`subStart-${mainTaskId}`);
 
-            if (prod > 0 && crew > 0) {
-                days = Math.ceil(qty / (prod * crew));
-                document.getElementById('item-days').value = days;
-            }
+            const name = nameInput.value.trim();
+            if (!name) return;
 
-            const startDateStr = document.getElementById('item-start-date').value;
-            if (startDateStr && days > 0) {
-                const startDate = new Date(startDateStr);
-                const endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + days);
-                document.getElementById('item-end-date').value = endDate.toISOString().split('T')[0];
-            }
-        }
+            const qty = parseFloat(qtyInput.value) || 0;
+            const prod = parseFloat(prodInput.value) || 1;
+            const crew = parseFloat(crewInput.value) || 1;
+            let days = parseFloat(daysInput.value) || Math.ceil(qty / (prod * crew));
+            let startDate = startInput.value || new Date().toISOString().split('T')[0];
 
-        function handleMasterFormSubmit(e) {
-            e.preventDefault();
-            const type = document.getElementById('item-type').value;
-            const name = document.getElementById('item-name').value;
-            const subId = document.getElementById('item-id').value;
+            const startObj = new Date(startDate);
+            const endObj = new Date(startObj);
+            endObj.setDate(startObj.getDate() + Math.max(0, days - 1));
+            let endDate = endObj.toISOString().split('T')[0];
 
-            if (type === 'category') {
-                const newCat = { id: 'cat-' + Date.now(), name };
-                appData.categories.push(newCat);
-            } else {
-                const categoryId = document.getElementById('parent-category-id').value;
-                const unit = document.getElementById('item-unit').value;
-                const estQty = parseFloat(document.getElementById('item-est-qty').value);
-                const productivity = parseFloat(document.getElementById('item-productivity').value);
-                const totalCrew = parseFloat(document.getElementById('item-crew').value);
-                const totalDays = parseFloat(document.getElementById('item-days').value);
-                const startDate = document.getElementById('item-start-date').value;
-                const endDate = document.getElementById('item-end-date').value;
-
-                if (subId) {
-                    const sub = appData.subtasks.find(s => s.id === subId);
-                    if (sub) {
-                        sub.categoryId = categoryId;
-                        sub.name = name;
-                        sub.unit = unit;
-                        sub.estQty = estQty;
-                        sub.productivity = productivity;
-                        sub.totalCrew = totalCrew;
-                        sub.totalDays = totalDays;
-                        sub.startDate = startDate;
-                        sub.endDate = endDate;
-                    }
-                } else {
-                    const newSub = {
-                        id: 'sub-' + Date.now(),
-                        categoryId, name, unit, estQty, productivity, totalCrew, totalDays, startDate, endDate,
-                        logs: []
-                    };
-                    appData.subtasks.push(newSub);
-                }
-            }
-            closeCategoryModal();
-            renderAllViews();
-        }
-
-        function deleteMasterItem(id, type) {
-            if (confirm(`Are you sure you want to delete this ${type}?`)) {
-                if (type === 'category') {
-                    appData.categories = appData.categories.filter(c => c.id !== id);
-                    appData.subtasks = appData.subtasks.filter(s => s.categoryId !== id);
-                } else {
-                    appData.subtasks = appData.subtasks.filter(s => s.id !== id);
-                }
-                renderAllViews();
-            }
-        }
-
-        // ================= PHASE 2 & 3 =================
-        function renderExecutionTable() {
-            const tbody = document.getElementById('execution-table-body');
-            tbody.innerHTML = '';
-
-            appData.categories.forEach(cat => {
-                const subs = appData.subtasks.filter(s => s.categoryId === cat.id);
-                let totalDeliveredCat = 0;
-                let totalEstCat = 0;
-                let sumPwdm = 0;
-
-                subs.forEach(sub => {
-                    const delivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
-                    totalDeliveredCat += delivered;
-                    totalEstCat += sub.estQty;
-                    const progress = sub.estQty > 0 ? Math.min(100, (delivered / sub.estQty) * 100) : 0;
-                    sumPwdm += progress;
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                task.subtasks.push({
+                    id: Date.now(),
+                    name: name,
+                    planQty: qty,
+                    unit: unitInput.value.trim() || 'm3',
+                    planProd: prod,
+                    planDays: days,
+                    planCrew: crew,
+                    planTotalCrew: days * crew,
+                    planStart: startDate,
+                    planEnd: endDate,
+                    logs: [] // Date-wise field logs array
                 });
-
-                const meanPwdm = subs.length > 0 ? (sumPwdm / subs.length).toFixed(1) : 0;
-                const catProgress = totalEstCat > 0 ? Math.min(100, (totalDeliveredCat / totalEstCat) * 100).toFixed(1) : 0;
-
-                const catRow = document.createElement('tr');
-                catRow.className = 'bg-slate-100 font-bold text-slate-900 border-t border-slate-200';
-                catRow.innerHTML = `
-                    <td class="p-3"><i class="fa-solid fa-folder text-brand-accent mr-2"></i> ${cat.name}</td>
-                    <td class="p-3 text-right">${totalDeliveredCat} / ${totalEstCat}</td>
-                    <td class="p-3 text-center" colspan="3">Category Mean PWDM Index: <span class="text-brand-accent">${meanPwdm}%</span></td>
-                    <td class="p-3 text-center font-bold text-emerald-600">${catProgress}%</td>
-                    <td class="p-3">
-                        <div class="w-full bg-slate-200 rounded-full h-2.5">
-                            <div class="bg-brand-accent h-2.5 rounded-full" style="width: ${catProgress}%"></div>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(catRow);
-
-                if (subs.length === 0) {
-                    const emptyRow = document.createElement('tr');
-                    emptyRow.innerHTML = `<td colspan="7" class="p-3 text-center text-slate-400 italic">No subtasks for execution analysis.</td>`;
-                    tbody.appendChild(emptyRow);
-                } else {
-                    subs.forEach(sub => {
-                        const delivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
-                        const actualCrew = sub.logs.length > 0 ? Math.max(...sub.logs.map(l => l.crew || 0)) : 0;
-                        const datesWithLogs = sub.logs.map(l => l.date).sort();
-                        const actualStart = datesWithLogs.length > 0 ? datesWithLogs[0] : (sub.startDate || '-');
-                        const actualEnd = datesWithLogs.length > 0 ? datesWithLogs[datesWithLogs.length - 1] : '-';
-
-                        let elapsedDays = 1;
-                        if (actualStart !== '-' && actualEnd !== '-') {
-                            const diffTime = Math.abs(new Date(actualEnd) - new Date(actualStart));
-                            elapsedDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
-                        }
-                        const execProd = (actualCrew > 0 && elapsedDays > 0) ? (delivered / (actualCrew * elapsedDays)).toFixed(2) : '0.00';
-                        const pwdmIndex = sub.estQty > 0 ? Math.min(100, Math.round((delivered / sub.estQty) * 100)) : 0;
-
-                        const subRow = document.createElement('tr');
-                        subRow.className = 'hover:bg-slate-50/80 transition';
-                        subRow.innerHTML = `
-                            <td class="p-3 pl-6 font-medium text-slate-700"><i class="fa-solid fa-arrow-turn-down text-slate-400 mr-2"></i>${sub.name}</td>
-                            <td class="p-3 text-right font-semibold text-slate-900">${delivered} / ${sub.estQty} ${sub.unit}</td>
-                            <td class="p-3 text-right text-slate-600">${actualCrew} Workers</td>
-                            <td class="p-3 text-slate-600">${actualStart} to ${actualEnd}</td>
-                            <td class="p-3 text-right font-bold text-brand-accent">${execProd}</td>
-                            <td class="p-3 text-center font-bold text-slate-800">${pwdmIndex}%</td>
-                            <td class="p-3">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-full bg-slate-200 rounded-full h-2">
-                                        <div class="bg-emerald-500 h-2 rounded-full" style="width: ${pwdmIndex}%"></div>
-                                    </div>
-                                    <span class="text-[10px] text-slate-500 whitespace-nowrap">${pwdmIndex}%</span>
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(subRow);
-                    });
-                }
-            });
+                await syncToCloud();
+                renderWorkspace();
+            }
         }
 
-        function renderMonitoringTable() {
-            const tbody = document.getElementById('monitoring-table-body');
-            tbody.innerHTML = '';
+        async function updateSubtaskPlan(mainTaskId, subId, field, value) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
+            if (!sub) return;
 
-            appData.subtasks.forEach(sub => {
-                const totalDelivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
-                const latestCrew = sub.logs.length > 0 ? sub.logs[sub.logs.length - 1].crew : 0;
+            if (field === 'name' || field === 'unit') {
+                sub[field] = value;
+            } else if (field === 'planQty') {
+                sub.planQty = parseFloat(value) || 0;
+            } else if (field === 'planProd') {
+                sub.planProd = parseFloat(value) || 1;
+            } else if (field === 'planDays') {
+                sub.planDays = parseFloat(value) || 1;
+            } else if (field === 'planCrew') {
+                sub.planCrew = parseFloat(value) || 1;
+            } else if (field === 'planStart') {
+                sub.planStart = value;
+            }
 
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50/80 transition';
-                row.innerHTML = `
-                    <td class="p-3 font-medium text-slate-800">${sub.name}</td>
-                    <td class="p-3 text-right font-bold text-slate-900">${totalDelivered} / ${sub.estQty} ${sub.unit}</td>
-                    <td class="p-3 text-right text-slate-600">${latestCrew} Workers</td>
-                    <td class="p-3 text-center">
-                        <button onclick="openAuditModal('${sub.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-xs transition">
-                            <i class="fa-solid fa-list-check mr-1 text-brand-accent"></i> View Logs (${sub.logs.length})
-                        </button>
-                    </td>
-                    <td class="p-3 text-center">
-                        <button onclick="openFieldLogModal('${sub.id}')" class="px-3 py-1 bg-brand-accent hover:bg-blue-600 text-white rounded-lg text-xs font-semibold shadow transition">
-                            <i class="fa-solid fa-plus mr-1"></i> Add Entry
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            // Recalculate Total Crew and End Date automatically
+            sub.planTotalCrew = sub.planDays * sub.planCrew;
+            if (sub.planStart && sub.planDays > 0) {
+                const sObj = new Date(sub.planStart);
+                sObj.setDate(sObj.getDate() + Math.round(sub.planDays) - 1);
+                sub.planEnd = sObj.toISOString().split('T')[0];
+            }
+
+            await syncToCloud();
+            renderWorkspace();
         }
 
-        function openFieldLogModal(subId) {
+        async function deleteSubtask(mainTaskId, subId) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                task.subtasks = task.subtasks.filter(st => st.id !== subId);
+                await syncToCloud();
+                renderWorkspace();
+            }
+        }
+
+        // Field Logging modals & submission
+        function openFieldLogModal(mainTaskId, subId) {
             document.getElementById('field-log-modal').classList.remove('hidden');
+            document.getElementById('log-task-id').value = mainTaskId;
             document.getElementById('log-subtask-id').value = subId;
             document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('log-qty').value = '';
@@ -656,30 +317,38 @@
             document.getElementById('field-log-modal').classList.add('hidden');
         }
 
-        function handleFieldLogSubmit(e) {
+        async function handleFieldLogSubmit(e) {
             e.preventDefault();
-            const subId = document.getElementById('log-subtask-id').value;
+            const mainTaskId = Number(document.getElementById('log-task-id').value);
+            const subId = Number(document.getElementById('log-subtask-id').value);
             const date = document.getElementById('log-date').value;
             const qty = parseFloat(document.getElementById('log-qty').value) || 0;
             const crew = parseFloat(document.getElementById('log-crew').value) || 0;
 
-            const sub = appData.subtasks.find(s => s.id === subId);
-            if (sub) {
-                sub.logs.push({ id: 'l-' + Date.now(), date, qty, crew });
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                const sub = task.subtasks.find(st => st.id === subId);
+                if (sub) {
+                    if (!sub.logs) sub.logs = [];
+                    sub.logs.push({ id: 'l-' + Date.now(), date, qty, crew });
+                    await syncToCloud();
+                }
             }
             closeFieldLogModal();
-            renderAllViews();
+            renderWorkspace();
         }
 
-        function openAuditModal(subId) {
-            const sub = appData.subtasks.find(s => s.id === subId);
+        function openAuditModal(mainTaskId, subId) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
             if (!sub) return;
 
             document.getElementById('audit-modal-title').textContent = `Audit History: ${sub.name}`;
             const tbody = document.getElementById('audit-table-body');
             tbody.innerHTML = '';
 
-            if (sub.logs.length === 0) {
+            if (!sub.logs || sub.logs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400 italic">No date-wise logs recorded yet.</td></tr>`;
             } else {
                 sub.logs.forEach(log => {
@@ -689,7 +358,7 @@
                         <td class="p-2 text-right text-slate-900">${log.qty} ${sub.unit}</td>
                         <td class="p-2 text-right text-slate-600">${log.crew}</td>
                         <td class="p-2 text-center">
-                            <button onclick="deleteLogEntry('${sub.id}', '${log.id}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="deleteLogEntry(${mainTaskId}, ${subId}, '${log.id}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -702,13 +371,198 @@
             document.getElementById('audit-modal').classList.add('hidden');
         }
 
-        function deleteLogEntry(subId, logId) {
-            const sub = appData.subtasks.find(s => s.id === subId);
-            if (sub) {
-                sub.logs = sub.logs.filter(l => l.id !== logId);
-                openAuditModal(subId);
-                renderAllViews();
+        async function deleteLogEntry(mainTaskId, subId, logId) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                const sub = task.subtasks.find(st => st.id === subId);
+                if (sub && sub.logs) {
+                    sub.logs = sub.logs.filter(l => l.id !== logId);
+                    await syncToCloud();
+                    openAuditModal(mainTaskId, subId);
+                    renderWorkspace();
+                }
             }
+        }
+
+        function renderWorkspace() {
+            const board = document.getElementById('workspaceBoard');
+            if (!board) return;
+
+            if (tasks.length === 0) {
+                board.innerHTML = `<div class="bg-white p-8 rounded-xl text-center text-slate-400 shadow-sm border border-slate-200">No categories created yet. Type a category name above and click Add Category.</div>`;
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(task => {
+                let subtasks = task.subtasks || [];
+                let totalEstQty = 0, totalDeliveredQty = 0, sumPwdm = 0;
+
+                subtasks.forEach(st => {
+                    totalEstQty += (st.planQty || 0);
+                    let delivered = (st.logs || []).reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
+                    totalDeliveredQty += delivered;
+                    let pwdm = st.planQty > 0 ? Math.min(100, (delivered / st.planQty) * 100) : 0;
+                    sumPwdm += pwdm;
+                });
+
+                let meanPwdm = subtasks.length > 0 ? (sumPwdm / subtasks.length).toFixed(1) : 0;
+                let catProgress = totalEstQty > 0 ? Math.min(100, (totalDeliveredQty / totalEstQty) * 100).toFixed(1) : 0;
+
+                html += `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-folder text-brand-accent"></i> ${task.name}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 text-xs">
+                                <span class="bg-white px-3 py-1 rounded-md border border-slate-200 shadow-xs">Mean PWDM: <b class="text-brand-accent">${meanPwdm}%</b></span>
+                                <span class="bg-white px-3 py-1 rounded-md border border-slate-200 shadow-xs">Progress: <b class="text-emerald-600">${catProgress}%</b></span>
+                                ${currentPhase === 1 ? `<button onclick="deleteMainTask(${task.id})" class="text-rose-500 hover:text-rose-700 font-semibold"><i class="fa-solid fa-trash"></i> Delete Category</button>` : ''}
+                            </div>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                `;
+
+                if (currentPhase === 1) {
+                    html += `
+                        <tr>
+                            <th class="p-3">Subtask Name</th>
+                            <th class="p-3 text-right">Est. Qty</th>
+                            <th class="p-3 text-center">Unit</th>
+                            <th class="p-3 text-right">Productivity</th>
+                            <th class="p-3 text-right">Days</th>
+                            <th class="p-3 text-right">Crew/Day</th>
+                            <th class="p-3 text-right text-brand-accent">Total Crew</th>
+                            <th class="p-3">Start Date</th>
+                            <th class="p-3">End Date (Auto)</th>
+                            <th class="p-3 text-center">Actions</th>
+                        </tr>
+                    `;
+                } else if (currentPhase === 2) {
+                    html += `
+                        <tr>
+                            <th class="p-3">Subtask Name</th>
+                            <th class="p-3 text-right">Delivered / Est</th>
+                            <th class="p-3 text-right">Actual Crew</th>
+                            <th class="p-3">Actual Window (Start - End)</th>
+                            <th class="p-3 text-right">Exec Prod</th>
+                            <th class="p-3 text-center">PWDM Index</th>
+                            <th class="p-3">Performance Bar</th>
+                        </tr>
+                    `;
+                } else {
+                    html += `
+                        <tr>
+                            <th class="p-3">Subtask Name</th>
+                            <th class="p-3 text-right">Total Delivered Qty</th>
+                            <th class="p-3 text-center">Audit Logs</th>
+                            <th class="p-3 text-center">Action / Log Entry</th>
+                        </tr>
+                    `;
+                }
+
+                html += `</thead><tbody class="divide-y divide-slate-100">`;
+
+                if (subtasks.length === 0) {
+                    let spanCols = currentPhase === 3 ? 4 : 10;
+                    html += `<tr><td colspan="${spanCols}" class="p-4 text-center text-slate-400 italic">No subtasks added yet.</td></tr>`;
+                } else {
+                    subtasks.forEach(st => {
+                        let delivered = (st.logs || []).reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
+                        let actualCrew = (st.logs && st.logs.length > 0) ? Math.max(...st.logs.map(l => l.crew || 0)) : 0;
+                        let logDates = (st.logs || []).map(l => l.date).sort();
+                        let actualStart = logDates.length > 0 ? logDates[0] : '-';
+                        let actualEnd = logDates.length > 0 ? logDates[logDates.length - 1] : '-';
+
+                        let elapsedDays = 1;
+                        if (actualStart !== '-' && actualEnd !== '-') {
+                            let dDiff = Math.abs(new Date(actualEnd) - new Date(actualStart));
+                            elapsedDays = Math.max(1, Math.ceil(dDiff / (1000 * 60 * 60 * 24)) + 1);
+                        }
+                        let execProd = (actualCrew > 0 && elapsedDays > 0) ? (delivered / (actualCrew * elapsedDays)).toFixed(2) : '0.00';
+                        let pwdmIndex = st.planQty > 0 ? Math.min(100, Math.round((delivered / st.planQty) * 100)) : 0;
+
+                        if (currentPhase === 1) {
+                            html += `
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-3"><input type="text" value="${st.name}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'name', this.value)" class="w-full border border-slate-200 rounded p-1"></td>
+                                    <td class="p-3 text-right"><input type="number" step="any" value="${st.planQty}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planQty', this.value)" class="w-20 border border-slate-200 rounded p-1 text-right"></td>
+                                    <td class="p-3 text-center"><input type="text" value="${st.unit}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)" class="w-16 border border-slate-200 rounded p-1 text-center"></td>
+                                    <td class="p-3 text-right"><input type="number" step="any" value="${st.planProd}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planProd', this.value)" class="w-20 border border-slate-200 rounded p-1 text-right"></td>
+                                    <td class="p-3 text-right"><input type="number" step="any" value="${st.planDays}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)" class="w-16 border border-slate-200 rounded p-1 text-right"></td>
+                                    <td class="p-3 text-right"><input type="number" step="any" value="${st.planCrew}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planCrew', this.value)" class="w-16 border border-slate-200 rounded p-1 text-right"></td>
+                                    <td class="p-3 text-right font-semibold text-brand-accent">${st.planTotalCrew}</td>
+                                    <td class="p-3"><input type="date" value="${st.planStart || ''}" onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)" class="border border-slate-200 rounded p-1"></td>
+                                    <td class="p-3 font-semibold text-slate-600">${st.planEnd || '-'}</td>
+                                    <td class="p-3 text-center"><button onclick="deleteSubtask(${task.id}, ${st.id})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                            `;
+                        } else if (currentPhase === 2) {
+                            html += `
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-3 font-medium text-slate-800">${st.name}</td>
+                                    <td class="p-3 text-right font-semibold">${delivered} / ${st.planQty} ${st.unit}</td>
+                                    <td class="p-3 text-right">${actualCrew} Workers</td>
+                                    <td class="p-3 text-slate-600">${actualStart} to ${actualEnd}</td>
+                                    <td class="p-3 text-right font-bold text-brand-accent">${execProd}</td>
+                                    <td class="p-3 text-center font-bold">${pwdmIndex}%</td>
+                                    <td class="p-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                                <div class="bg-emerald-500 h-2 rounded-full" style="width: ${pwdmIndex}%"></div>
+                                            </div>
+                                            <span class="text-[10px] text-slate-500">${pwdmIndex}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            html += `
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-3 font-medium text-slate-800">${st.name}</td>
+                                    <td class="p-3 text-right font-bold text-slate-900">${delivered} / ${st.planQty} ${st.unit}</td>
+                                    <td class="p-3 text-center">
+                                        <button onclick="openAuditModal(${task.id}, ${st.id})" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-xs transition">
+                                            <i class="fa-solid fa-list-check mr-1 text-brand-accent"></i> View Logs (${st.logs ? st.logs.length : 0})
+                                        </button>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button onclick="openFieldLogModal(${task.id}, ${st.id})" class="px-3 py-1 bg-brand-accent hover:bg-blue-600 text-white rounded-lg text-xs font-semibold shadow transition">
+                                            <i class="fa-solid fa-plus mr-1"></i> Add Entry
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    });
+                }
+
+                if (currentPhase === 1) {
+                    html += `
+                        <tr class="bg-slate-50/60">
+                            <td class="p-3"><input type="text" id="subName-${task.id}" placeholder="New subtask name..." class="w-full border border-slate-300 rounded p-1"></td>
+                            <td class="p-3 text-right"><input type="number" id="subQty-${task.id}" placeholder="Qty" step="any" class="w-20 border border-slate-300 rounded p-1 text-right"></td>
+                            <td class="p-3 text-center"><input type="text" id="subUnit-${task.id}" value="m3" class="w-16 border border-slate-300 rounded p-1 text-center"></td>
+                            <td class="p-3 text-right"><input type="number" id="subProd-${task.id}" value="20" step="any" class="w-20 border border-slate-300 rounded p-1 text-right"></td>
+                            <td class="p-3 text-right"><input type="number" id="subDays-${task.id}" value="5" step="any" class="w-16 border border-slate-300 rounded p-1 text-right"></td>
+                            <td class="p-3 text-right"><input type="number" id="subCrew-${task.id}" value="10" step="any" class="w-16 border border-slate-300 rounded p-1 text-right"></td>
+                            <td class="p-3 text-right">—</td>
+                            <td class="p-3"><input type="date" id="subStart-${task.id}" class="border border-slate-300 rounded p-1"></td>
+                            <td class="p-3">—</td>
+                            <td class="p-3 text-center">
+                                <button onclick="addSubtask(${task.id})" class="bg-brand-success hover:bg-emerald-600 text-white px-3 py-1 rounded text-xs font-semibold shadow transition">Add</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `</tbody></table></div></div>`;
+            });
+
+            board.innerHTML = html;
         }
     </script>
 </body>
