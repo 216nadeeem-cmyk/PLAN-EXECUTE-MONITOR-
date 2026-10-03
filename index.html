@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPMS Dashboard - Plan, Execute & Monitor</title>
+    <!-- Include Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --info: #0284c7;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .header-title p {
+            margin: 5px 0 0 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .role-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .role-selector select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .task-input-bar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-input-bar input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .task-category {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .category-header {
+            background: #f1f5f9;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .category-stats-inline {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .subtask-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .subtask-table th, .subtask-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .subtask-table th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .subtask-table input, .subtask-table select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+
+        .locked-cell {
+            background: #f1f5f9;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-on-time { background: #dcfce7; color: #166534; }
+        .badge-late { background: #fee2e2; color: #991b1b; }
+        .badge-early { background: #e0f2fe; color: #0369a1; }
+
+        .chart-container {
+            font-size: 11px;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .bar-track {
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            position: relative;
+            margin-bottom: 4px;
+            overflow: hidden;
+        }
+
+        .bar-pwdm { height: 100%; background: var(--success); border-radius: 3px; }
+        .bar-plan { position: absolute; height: 100%; background: #94a3b8; border-radius: 3px; }
+        .bar-exec { position: absolute; height: 100%; background: var(--primary); border-radius: 3px; opacity: 0.8; }
+        .bar-exec.lagging { background: var(--danger); }
+        .bar-exec.leading { background: var(--success); }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+
+    <!-- Standard datalist for autocomplete units -->
+    <datalist id="standard-units">
+        <option value="sft">
+        <option value="cum">
+        <option value="Nos">
+        <option value="Tons">
+        <option value="Rft">
+        <option value="Sets">
+    </datalist>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <h1>CPMS Dashboard</h1>
+                <p>Smart Planning, Logical Rollups, PWDM Tracking & Real-Time Performance Assessment.</p>
+            </div>
+            <div class="role-selector">
+                <label for="userRole">Simulate Role:</label>
+                <select id="userRole" onchange="switchPhase(currentPhase)">
+                    <option value="manager">Project Owner / Manager (Full Access)</option>
+                    <option value="assignee">Assignee / Field Crew</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchPhase(1)">Phase 1: Planning Baseline</button>
+            <button class="tab-btn" onclick="switchPhase(2)">Phase 2: Field Execution</button>
+            <button class="tab-btn" onclick="switchPhase(3)">Phase 3: Executive Dashboard</button>
+        </div>
+
+        <!-- Task Creation Card -->
+        <div class="card" id="taskCreationCard">
+            <div class="task-input-bar">
+                <input type="text" id="mainTaskInput" placeholder="Enter Task Category or Summary Node (Press Enter)...">
+                <button class="btn-success" onclick="addMainTask()">+ Add Task Category</button>
+            </div>
+        </div>
+
+        <!-- Workspace Board -->
+        <div id="workspaceBoard">
+            <div class="empty-state">Loading tasks from cloud...</div>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://nudhzvzmhzghznmpavif.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZGh6dnptaHpnaHpubXBhdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTQ0MzQsImV4cCI6MjEwNjU5MDQzNH0.3Nm6yvvD1x2wfLbAX_4bc8EjKuev8Kkl-oIpzZvBoBc';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let tasks = [];
+        let currentPhase = 1;
+        const employeesList = ["Engr. Ali", "Ahmed Khan", "Tariq Malik", "John Smith", "Contractor Crew A"];
+
+        // 1. Fetch data from Supabase when the page loads
+        async function loadTasksFromCloud() {
+            const { data, error } = await _supabase.from('tasks').select('*');
+            if (error) {
+                console.error('Error loading tasks from Supabase:', error.message);
+            } else {
+                tasks = data || [];
+                renderWorkspace();
+            }
+        }
+
+        // 2. Save entire tasks state to Supabase securely with error catching
+        async function syncToCloud() {
+            if (tasks.length === 0) return;
+            
+            const cleanTasks = tasks.map(t => ({
+                id: Number(t.id),
+                name: String(t.name),
+                subtasks: t.subtasks || []
+            }));
+
+            const { error } = await _supabase.from('tasks').upsert(cleanTasks);
+            if (error) {
+                console.error('Sync to cloud failed:', error.message);
+                alert('Cloud Sync Error: ' + error.message);
+            }
+        }
+
+        // 3. Listen for Real-Time changes from other users/devices
+        function setupRealtimeSync() {
+            _supabase
+                .channel('public:tasks')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+                    loadTasksFromCloud();
+                })
+                .subscribe();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainInput = document.getElementById('mainTaskInput');
+            if (mainInput) {
+                mainInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') addMainTask();
+                });
+            }
+            loadTasksFromCloud();
+            setupRealtimeSync();
+        });
+
+        function switchPhase(phaseNum) {
+            currentPhase = phaseNum;
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx + 1 === phaseNum);
+            });
+            
+            const roleElement = document.getElementById('userRole');
+            const role = roleElement ? roleElement.value : 'manager';
+            const taskCreationCard = document.getElementById('taskCreationCard');
+            if (taskCreationCard) {
+                taskCreationCard.style.display = (phaseNum === 2 && role === 'assignee') ? 'none' : 'block';
+            }
+            renderWorkspace();
+        }
+
+        async function addMainTask() {
+            const input = document.getElementById('mainTaskInput');
+            if (!input) return;
+            const name = input.value.trim();
+            if (!name) return;
+
+            const newTask = { id: Date.now(), name: name, subtasks: [] };
+            tasks.push(newTask);
+            input.value = '';
+            
+            const { error } = await _supabase.from('tasks').insert([{
+                id: Number(newTask.id),
+                name: newTask.name,
+                subtasks: newTask.subtasks
+            }]);
+
+            if (error) {
+                console.error('Error inserting main task:', error.message);
+                alert('Database insert error: ' + error.message);
+            }
+            
+            renderWorkspace();
+        }
+
+        async function deleteMainTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            const { error } = await _supabase.from('tasks').delete().eq('id', id);
+            if (error) {
+                console.error('Error deleting task:', error.message);
+            }
+            renderWorkspace();
+        }
+
+        async function addSubtask(mainTaskId) {
+            const nameInput = document.getElementById(`subName-${mainTaskId}`);
+            const qtyInput = document.getElementById(`subQty-${mainTaskId}`);
+            const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
+            const prodInput = document.getElementById(`subProd-${mainTaskId}`);
+            const daysInput = document.getElementById(`subDays-${mainTaskId}`);
+            const crewInput = document.getElementById(`subCrew-${mainTaskId}`);
+            const totalCrewInput = document.getElementById(`subTotalCrew-${mainTaskId}`);
+            const startInput = document.getElementById(`subStart-${mainTaskId}`);
+            const endInput = document.getElementById(`subEnd-${mainTaskId}`);
+
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            let obj = {
+                qty: parseFloat(qtyInput.value) || 0,
+                prod: parseFloat(prodInput.value) || 0,
+                days: parseFloat(daysInput.value) || 0,
+                crew: parseFloat(crewInput.value) || 1,
+                totalCrew: parseFloat(totalCrewInput.value) || 0,
+                startDate: startInput.value,
+                endDate: endInput.value
+            };
+
+            calculateValues(obj, 'qty');
+
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                task.subtasks.push({
+                    id: Date.now(),
+                    name: name,
+                    planQty: obj.qty,
+                    unit: unitInput.value.trim() || 'Units',
+                    planProd: obj.prod,
+                    planDays: Math.round(obj.days * 10) / 10,
+                    planCrew: obj.crew,
+                    planTotalCrew: Math.round(obj.totalCrew * 10) / 10,
+                    planStart: obj.startDate,
+                    planEnd: obj.endDate,
+                    execQty: 0,
+                    execTotalCrew: 0,
+                    execStart: '',
+                    execEnd: '',
+                    assignee: employeesList[0]
+                });
+                await syncToCloud();
+            }
+            renderWorkspace();
+        }
+
+        function calculateValues(item, changedField) {
+            if (item.startDate && item.endDate) {
+                const startObj = new Date(item.startDate);
+                const endObj = new Date(item.endDate);
+                const diffDays = Math.ceil((endObj - startObj) / (1000 * 60 * 60 * 24)) + 1;
+                if (diffDays > 0) item.days = diffDays;
+            } else if (item.startDate && item.days > 0 && !item.endDate) {
+                const startObj = new Date(item.startDate);
+                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
+                item.endDate = startObj.toISOString().split('T')[0];
+            }
+
+            if (changedField === 'totalCrew') {
+                if (item.crew > 0) item.days = item.totalCrew / item.crew;
+                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
+            } else if (changedField === 'days' || changedField === 'crew') {
+                item.totalCrew = item.days * item.crew;
+                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
+            } else if (changedField === 'prod') {
+                if (item.totalCrew > 0) item.qty = item.prod * item.totalCrew;
+                else if (item.qty > 0 && item.prod > 0) item.totalCrew = item.qty / item.prod;
+            } else {
+                if (item.days > 0 && item.crew > 0) item.totalCrew = item.days * item.crew;
+                if (item.qty > 0 && item.prod > 0 && item.totalCrew === 0) item.totalCrew = item.qty / item.prod;
+                if (item.totalCrew > 0 && item.crew > 0 && item.days === 0) item.days = item.totalCrew / item.crew;
+                if (item.totalCrew > 0 && item.days > 0 && item.crew === 0) item.crew = item.totalCrew / item.days;
+                if (item.qty > 0 && item.totalCrew > 0 && item.prod === 0) item.prod = item.qty / item.totalCrew;
+            }
+
+            item.totalCrew = item.days * item.crew;
+            if (item.startDate && item.days > 0) {
+                const startObj = new Date(item.startDate);
+                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
+                item.endDate = startObj.toISOString().split('T')[0];
+            }
+        }
+
+        async function updateSubtaskPlan(mainTaskId, subId, field, value) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
+            if (!sub) return;
+
+            if (['name', 'unit', 'planStart', 'planEnd'].includes(field)) {
+                sub[field] = value;
+            } else {
+                sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
+            }
+
+            let temp = { 
+                qty: sub.planQty, prod: sub.planProd, days: sub.planDays, 
+                crew: sub.planCrew, totalCrew: sub.planTotalCrew, 
+                startDate: sub.planStart, endDate: sub.planEnd 
+            };
+            
+            calculateValues(temp, field);
+            
+            sub.planQty = temp.qty;
+            sub.planProd = temp.prod;
+            sub.planDays = Math.round(temp.days * 10) / 10;
+            sub.planCrew = Math.round(temp.crew * 10) / 10;
+            sub.planTotalCrew = Math.round(temp.totalCrew * 10) / 10;
+            sub.planStart = temp.startDate;
+            sub.planEnd = temp.endDate;
+
+            await syncToCloud();
+            renderWorkspace();
+        }
+
+        async function updateSubtaskExec(mainTaskId, subId, field, value) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
+            if (!sub) return;
+            
+            if (['assignee', 'execStart', 'execEnd'].includes(field)) {
+                sub[field] = value;
+            } else {
+                sub[field] = parseFloat(value) || 0;
+            }
+            await syncToCloud();
+            renderWorkspace();
+        }
+
+        async function deleteSubtask(mainTaskId, subId) {
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (task) {
+                task.subtasks = task.subtasks.filter(st => st.id !== subId);
+                await syncToCloud();
+                renderWorkspace();
+            }
+        }
+
+        function getSubtaskStatus(sub) {
+            if (!sub.execStart && sub.execQty === 0) return 'unproductive';
+            if (sub.execQty >= sub.planQty && sub.planQty > 0) {
+                if (sub.planEnd && sub.execEnd) {
+                    return new Date(sub.execEnd) <= new Date(sub.planEnd) ? 'early-completed' : 'delayed';
+                }
+                return 'intime';
+            }
+            if (sub.planStart && sub.execStart) {
+                const diff = Math.round((new Date(sub.execStart) - new Date(sub.planStart)) / (1000 * 60 * 60 * 24));
+                if (diff > 0) return 'delayed';
+            }
+            return sub.execQty > 0 ? 'productive' : 'balanced';
+        }
+
+        function generateExecutionInsights(sub) {
+            if (!sub.execStart && sub.execQty === 0) return `<span class="text-muted">Awaiting start...</span>`;
+            let statusTag = `<span class="badge badge-on-time">In-Time</span>`;
+            let desc = 'Active execution.';
+
+            const stType = getSubtaskStatus(sub);
+            if (stType === 'delayed') {
+                statusTag = `<span class="badge badge-late">Delayed</span>`;
+                desc = 'Slippage detected.';
+            } else if (stType === 'early-completed') {
+                statusTag = `<span class="badge badge-early">Early Comp</span>`;
+                desc = 'Ahead of schedule!';
+            }
+
+            return `${statusTag} <div class="insight-box">${desc}</div>`;
+        }
+
+        function renderOffsetTimelineChart(sub) {
+            let planStartObj = sub.planStart ? new Date(sub.planStart) : null;
+            let planEndObj = sub.planEnd ? new Date(sub.planEnd) : null;
+            if (!planStartObj || !planEndObj) return `<span class="text-muted">Plan dates required</span>`;
+
+            let planDays = Math.max(1, Math.round((planEndObj - planStartObj)/(1000*60*60*24)) + 1);
+            let execStartObj = sub.execStart ? new Date(sub.execStart) : planStartObj;
+            let execEndObj = sub.execEnd ? new Date(sub.execEnd) : (sub.execStart ? new Date(sub.execStart) : planEndObj);
+            let execDays = Math.max(1, Math.round((execEndObj - execStartObj)/(1000*60*60*24)) + 1);
+
+            let minTime = Math.min(planStartObj.getTime(), sub.execStart ? new Date(sub.execStart).getTime() : planStartObj.getTime());
+            let maxTime = Math.max(planEndObj.getTime(), sub.execEnd ? new Date(sub.execEnd).getTime() : planEndObj.getTime());
+            let totalSpanDays = Math.max(1, Math.round((maxTime - minTime)/(1000*60*60*24)) + 1);
+
+            let planLeft = ((planStartObj.getTime() - minTime) / (1000*60*60*24) / totalSpanDays) * 100;
+            let planWidth = (planDays / totalSpanDays) * 100;
+            let execLeft = ((execStartObj.getTime() - minTime) / (1000*60*60*24) / totalSpanDays) * 100;
+            let execWidth = (execDays / totalSpanDays) * 100;
+            
+            let execClass = execDays > planDays || (sub.execStart && new Date(sub.execStart) > planStartObj) ? 'bar-exec lagging' : 'bar-exec leading';
+            if (!sub.execStart && !sub.execEnd) execClass = 'bar-exec';
+
+            let pwdmPercent = sub.planQty > 0 ? Math.round((sub.execQty / sub.planQty) * 100) : 0;
+            let pwdmColor = pwdmPercent >= 100 ? 'var(--success)' : (pwdmPercent >= 50 ? 'var(--info)' : 'var(--danger)');
+            let clampedPwdm = Math.min(pwdmPercent, 100);
+
+            return `
+                <div class="chart-container">
+                    <div class="chart-label">
+                        <span><b>PWDM Index</b></span> 
+                        <span style="color:${pwdmColor}; font-weight:bold;">${pwdmPercent}%</span>
+                    </div>
+                    <div class="bar-track" title="PWDM Progress">
+                        <div class="bar-pwdm" style="width: ${clampedPwdm}%; background: ${pwdmColor};"></div>
+                    </div>
+                    <div class="chart-label" style="margin-top:4px;">
+                        <span>Timeline (Plan vs Act)</span>
+                    </div>
+                    <div class="bar-track" title="Planned Duration">
+                        <div class="bar-plan" style="left: ${planLeft}%; width: ${planWidth}%;"></div>
+                    </div>
+                    <div class="bar-track" title="Executed Duration">
+                        <div class="${execClass}" style="left: ${execLeft}%; width: ${execWidth}%;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateCategoryRollup(task) {
+            let rollup = {
+                totalEstimatedLabor: 0, totalExecLabor: 0, earliestStart: null, latestEnd: null,
+                totalSubtasks: task.subtasks ? task.subtasks.length : 0,
+                statusCounts: { earlyCompleted: 0, intime: 0, delayed: 0 }
+            };
+
+            if (!task.subtasks) return rollup;
+            let totalWeightedProdNumerator = 0, totalDurationSum = 0;
+
+            task.subtasks.forEach(st => {
+                rollup.totalEstimatedLabor += (st.planTotalCrew || 0);
+                rollup.totalExecLabor += (st.execTotalCrew || 0);
+
+                if (st.planStart) {
+                    let stDate = new Date(st.planStart);
+                    if (!rollup.earliestStart || stDate < rollup.earliestStart) rollup.earliestStart = stDate;
+                }
+                if (st.planEnd) {
+                    let endDate = new Date(st.planEnd);
+                    if (!rollup.latestEnd || endDate > rollup.latestEnd) rollup.latestEnd = endDate;
+                }
+
+                if (st.planDays > 0) {
+                    totalWeightedProdNumerator += (st.planProd * st.planDays);
+                    totalDurationSum += st.planDays;
+                }
+
+                let stStatus = getSubtaskStatus(st);
+                if (stStatus === 'early-completed') rollup.statusCounts.earlyCompleted++;
+                else if (stStatus === 'intime') rollup.statusCounts.intime++;
+                else if (stStatus === 'delayed') rollup.statusCounts.delayed++;
+            });
+
+            rollup.equivalentProd = totalDurationSum > 0 ? (Math.round((totalWeightedProdNumerator / totalDurationSum) * 100) / 100) : 0;
+            rollup.earliestStart = rollup.earliestStart ? rollup.earliestStart.toISOString().split('T')[0] : '—';
+            rollup.latestEnd = rollup.latestEnd ? rollup.latestEnd.toISOString().split('T')[0] : '—';
+            return rollup;
+        }
+
+        function renderWorkspace() {
+            const board = document.getElementById('workspaceBoard');
+            const roleElement = document.getElementById('userRole');
+            const role = roleElement ? roleElement.value : 'manager';
+
+            if (!board) return;
+
+            if (tasks.length === 0) {
+                board.innerHTML = `<div class="empty-state">No tasks created yet. Type a task name above and hit Enter.</div>`;
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(task => {
+                let rollup = calculateCategoryRollup(task);
+
+                html += `
+                    <div class="task-category">
+                        <div class="category-header">
+                            <div class="category-title">📁 ${task.name}</div>
+                            <div class="category-stats-inline">
+                                <div class="stat-pill">Est. Labor: <b>${rollup.totalEstimatedLabor} MD</b></div>
+                                <div class="stat-pill">Exec Labor: <b>${rollup.totalExecLabor} MD</b></div>
+                                <div class="stat-pill">Span: <b>${rollup.earliestStart} to ${rollup.latestEnd}</b></div>
+                                <div class="stat-pill">Eqv Prod: <b>${rollup.equivalentProd}</b></div>
+                                <div class="stat-pill">
+                                    Health: <span style="color:var(--success);margin-left:4px;">${rollup.statusCounts.intime + rollup.statusCounts.earlyCompleted} OK</span>
+                                    <span style="color:var(--danger);margin-left:4px;">${rollup.statusCounts.delayed} Late</span>
+                                </div>
+                            </div>
+                            ${role !== 'assignee' ? `<button class="btn-danger" style="padding: 4px 10px; font-size: 11px;" onclick="deleteMainTask(${task.id})">Delete</button>` : ''}
+                        </div>
+                        <div style="padding: 15px; overflow-x: auto;">
+                            <table class="subtask-table">
+                                <thead>
+                `;
+
+                if (currentPhase === 1) {
+                    html += `
+                        <tr>
+                            <th style="min-width:150px;">Subtask Name</th>
+                            <th style="width:90px;">Quantity</th>
+                            <th style="width:100px;">Unit</th>
+                            <th style="width:100px;">Prod (Qty/MD)</th>
+                            <th style="width:80px;">Days</th>
+                            <th style="width:80px;">Crew/Day</th>
+                            <th style="width:90px; color:var(--primary);">Total Crew (MD)</th>
+                            <th style="width:130px;">Start Date</th>
+                            <th style="width:130px;">End Date</th>
+                            ${role !== 'assignee' ? '<th style="width:60px;">Actions</th>' : ''}
+                        </tr>
+                    `;
+                } else if (currentPhase === 2) {
+                    html += `
+                        <tr>
+                            <th>Subtask Name</th>
+                            <th>Plan Start/End</th>
+                            <th>Delivered Qty</th>
+                            <th>Actual Total Crew (MD)</th>
+                            <th style="color:var(--info);">Exec Prod</th>
+                            <th>Actual Start</th>
+                            <th>Actual End</th>
+                            <th>Assignee</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    `;
+                } else {
+                    html += `
+                        <tr>
+                            <th>Subtask Name</th>
+                            <th>Dates (Plan/Exec)</th>
+                            <th>Plan Qty</th>
+                            <th>Delivered Qty</th>
+                            <th>Plan Prod</th>
+                            <th style="color:var(--info);">Exec Prod</th>
+                            <th>Status</th>
+                            <th style="min-width: 220px;">PWDM & Timeline</th>
+                        </tr>
+                    `;
+                }
+
+                html += `</thead><tbody>`;
+
+                if (!task.subtasks || task.subtasks.length === 0) {
+                    let colSpan = currentPhase === 3 ? 8 : 10;
+                    html += `<tr><td colspan="${colSpan}" class="empty-state">No subtasks added yet.</td></tr>`;
+                } else {
+                    task.subtasks.forEach(st => {
+                        let assigneeOptions = employeesList.map(emp => `<option value="${emp}" ${st.assignee === emp ? 'selected' : ''}>${emp}</option>`).join('');
+                        let isReadOnlyPlan = (role === 'assignee');
+                        let execProdCalc = (st.execTotalCrew > 0) ? (st.execQty / st.execTotalCrew).toFixed(2) : 0;
+
+                        if (currentPhase === 1) {
+                            html += `
+                                <tr>
+                                    <td><input type="text" value="${st.name}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'name', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planQty}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'qty', this.value)"></td>
+                                    <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'days', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'crew', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planTotalCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'totalCrew', this.value)" style="border-color:var(--primary); background:#eff6ff;"></td>
+                                    <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
+                                    <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
+                                    ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
+                                </tr>
+                            `;
+                        } else if (currentPhase === 2) {
+                            html += `
+                                <tr>
+                                    <td><b>${st.name}</b></td>
+                                    <td class="locked-cell" style="font-size:10px;">P: ${st.planStart || '—'} <br>to ${st.planEnd || '—'}</td>
+                                    <td><input type="number" step="any" value="${st.execQty}" placeholder="Qty" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execQty', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.execTotalCrew}" placeholder="Total MD" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execTotalCrew', this.value)" style="border-color:var(--primary);"></td>
+                                    <td class="calc-text">${execProdCalc}</td>
+                                    <td><input type="date" value="${st.execStart || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execStart', this.value)"></td>
+                                    <td><input type="date" value="${st.execEnd || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execEnd', this.value)"></td>
+                                    <td>
+                                        <select onchange="updateSubtaskExec(${task.id}, ${st.id}, 'assignee', this.value)">
+                                            <option value="${st.assignee}">${st.assignee}</option>
+                                            ${assigneeOptions}
+                                        </select>
+                                    </td>
+                                    <td>${generateExecutionInsights(st)}</td>
+                                    <td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id}, ${st.id})">X</button></td>
+                                </tr>
+                            `;
+                        } else {
+                            html += `
+                                <tr>
+                                    <td><b>${st.name}</b></td>
+                                    <td style="font-size:11px;">
+                                        <div style="color:var(--text-muted)">P: ${st.planStart||'—'} to ${st.planEnd||'—'}</div>
+                                        <div style="color:var(--text-main);font-weight:600;">E: ${st.execStart||'—'} to ${st.execEnd||'—'}</div>
+                                    </td>
+                                    <td>${st.planQty} ${st.unit}</td>
+                                    <td><b>${st.execQty}</b> ${st.unit}</td>
+                                    <td>${st.planProd}</td>
+                                    <td class="calc-text">${execProdCalc}</td>
+                                    <td>${generateExecutionInsights(st)}</td>
+                                    <td>${renderOffsetTimelineChart(st)}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+                }
+
+                if (currentPhase !== 3 && role !== 'assignee') {
+                    html += `
+                        <tr style="background-color: #f8fafc;">
+                            <td><input type="text" id="subName-${task.id}" placeholder="New subtask name..."></td>
+                            <td><input type="number" id="subQty-${task.id}" placeholder="Qty" step="any"></td>
+                            <td><input type="text" id="subUnit-${task.id}" list="standard-units" placeholder="Unit"></td>
+                            <td><input type="number" id="subProd-${task.id}" placeholder="Prod" step="any"></td>
+                            <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any"></td>
+                            <td><input type="number" id="subCrew-${task.id}" placeholder="Crw/Day" value="1" step="any"></td>
+                            <td><input type="number" id="subTotalCrew-${task.id}" placeholder="Tot Crew" step="any"></td>
+                            <td><input type="date" id="subStart-${task.id}"></td>
+                            <td><input type="date" id="subEnd-${task.id}"></td>
+                            <td>
+                                <button class="btn-success" onclick="addSubtask(${task.id})" style="padding: 6px 12px; width: 100%;">Add</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                html += `</tbody></table></div></div>`;
+            });
+
+            board.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
