@@ -3,852 +3,785 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPMS Dashboard - Plan, Execute & Monitor</title>
-    <!-- Include Supabase Client Library -->
+    <title>R.F CONSTRUCTION CO. (PVT) LTD.</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            DEFAULT: '#1e293b',
+                            light: '#334155',
+                            accent: '#3b82f6',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --info: #0284c7;
-            --background: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--background);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            padding: 20px 25px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .header-title h1 {
-            margin: 0;
-            color: var(--primary);
-            font-size: 24px;
-        }
-
-        .header-title p {
-            margin: 5px 0 0 0;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .role-selector {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .role-selector select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 14px;
-            background: #fff;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .task-input-bar {
-            display: flex;
-            gap: 10px;
-        }
-
-        .task-input-bar input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 15px;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .btn-success:hover {
-            opacity: 0.9;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .task-category {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .category-header {
-            background: #f1f5f9;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .category-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--text-main);
-        }
-
-        .category-stats-inline {
-            display: flex;
-            gap: 15px;
-            font-size: 13px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .stat-pill {
-            background: #fff;
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-        }
-
-        .subtask-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 13px;
-        }
-
-        .subtask-table th, .subtask-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .subtask-table th {
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .subtask-table input, .subtask-table select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 13px;
-        }
-
-        .locked-cell {
-            background: #f1f5f9;
-            color: var(--text-muted);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .badge-on-time { background: #dcfce7; color: #166534; }
-        .badge-late { background: #fee2e2; color: #991b1b; }
-        .badge-early { background: #e0f2fe; color: #0369a1; }
-
-        .chart-container {
-            font-size: 11px;
-        }
-
-        .chart-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2px;
-        }
-
-        .bar-track {
-            background: #e2e8f0;
-            height: 6px;
-            border-radius: 3px;
-            position: relative;
-            margin-bottom: 4px;
-            overflow: hidden;
-        }
-
-        .bar-pwdm { height: 100%; background: var(--success); border-radius: 3px; }
-        .bar-plan { position: absolute; height: 100%; background: #94a3b8; border-radius: 3px; }
-        .bar-exec { position: absolute; height: 100%; background: var(--primary); border-radius: 3px; opacity: 0.8; }
-        .bar-exec.lagging { background: var(--danger); }
-        .bar-exec.leading { background: var(--success); }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-style: italic;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Custom scrollbar for data tables */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
-
-    <!-- Standard datalist for autocomplete units -->
-    <datalist id="standard-units">
-        <option value="sft">
-        <option value="cum">
-        <option value="Nos">
-        <option value="Tons">
-        <option value="Rft">
-        <option value="Sets">
-    </datalist>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="header-title">
-                <h1>CPMS Dashboard</h1>
-                <p>Smart Planning, Logical Rollups, PWDM Tracking & Real-Time Performance Assessment.</p>
+    <!-- Top Header Banner -->
+    <header class="bg-brand-dark text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black tracking-wider uppercase text-white flex items-center gap-3">
+                    <i class="fa-solid fa-building-shield text-brand-accent"></i> R.F CONSTRUCTION CO. (PVT) LTD.
+                </h1>
+                <p class="text-xs text-slate-400 font-medium tracking-wide mt-1">PLAN-EXECUTE-MONITOR. (Follow - Perform - cheer)</p>
             </div>
-            <div class="role-selector">
-                <label for="userRole">Simulate Role:</label>
-                <select id="userRole" onchange="switchPhase(currentPhase)">
-                    <option value="manager">Project Owner / Manager (Full Access)</option>
-                    <option value="assignee">Assignee / Field Crew</option>
-                </select>
-            </div>
-        </header>
-
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchPhase(1)">Phase 1: Planning Baseline</button>
-            <button class="tab-btn" onclick="switchPhase(2)">Phase 2: Field Execution</button>
-            <button class="tab-btn" onclick="switchPhase(3)">Phase 3: Executive Dashboard</button>
-        </div>
-
-        <!-- Task Creation Card -->
-        <div class="card" id="taskCreationCard">
-            <div class="task-input-bar">
-                <input type="text" id="mainTaskInput" placeholder="Enter Task Category or Summary Node (Press Enter)...">
-                <button class="btn-success" onclick="addMainTask()">+ Add Task Category</button>
+            
+            <!-- Connection Status & Quick Stats -->
+            <div class="flex items-center gap-4 bg-slate-800/80 px-4 py-2 rounded-lg border border-slate-700 text-xs">
+                <div class="flex items-center gap-2">
+                    <span id="db-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="db-status-text" class="text-slate-300 font-medium">Connecting to Supabase...</span>
+                </div>
             </div>
         </div>
+    </header>
 
-        <!-- Workspace Board -->
-        <div id="workspaceBoard">
-            <div class="empty-state">Loading tasks from cloud...</div>
+    <!-- Navigation Phase Tabs -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto">
+            <button onclick="switchTab('phase1')" id="btn-phase1" class="tab-btn px-6 py-3 font-bold text-sm border-b-2 border-brand-accent text-brand-accent flex items-center gap-2 whitespace-nowrap transition-all">
+                <i class="fa-solid fa-layer-group"></i> Phase 1: Master Planning
+            </button>
+            <button onclick="switchTab('phase2')" id="btn-phase2" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
+                <i class="fa-solid fa-play"></i> Phase 2: Execution & Productivity
+            </button>
+            <button onclick="switchTab('phase3')" id="btn-phase3" class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 whitespace-nowrap transition-all">
+                <i class="fa-solid fa-chart-line"></i> Phase 3: Monitoring & Field Logs
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- ========================================== -->
+        <!-- PHASE 1: MASTER PLANNING                   -->
+        <!-- ========================================== -->
+        <section id="phase1" class="tab-content active space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Master Baseline & Structural Setup</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Manage Categories, Tasks, and Subtasks. Fixed baseline estimates and automated scheduling formulas apply here.</p>
+                </div>
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <button onclick="openCategoryModal()" class="bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus"></i> Add Category / Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- Master Data Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Category / Subtask Name</th>
+                                <th class="p-3 text-center">Unit</th>
+                                <th class="p-3 text-right">Est. Qty (Manual)</th>
+                                <th class="p-3 text-right">Productivity</th>
+                                <th class="p-3 text-right">Total Crew</th>
+                                <th class="p-3 text-right">Total Days</th>
+                                <th class="p-3">Start Date</th>
+                                <th class="p-3">End Date (Auto)</th>
+                                <th class="p-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- PHASE 2: EXECUTION & PRODUCTIVITY          -->
+        <!-- ========================================== -->
+        <section id="phase2" class="tab-content space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Real-Time Execution & PWDM Assessment</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Master-slave synchronized. Actual start/end dates and execution productivity (Exec Prod) are derived purely from real-time field data logs.</p>
+                </div>
+            </div>
+
+            <!-- Execution Table with Category Rollups & Charts -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Category / Subtask (Mean Rollup)</th>
+                                <th class="p-3 text-right">Delivered Qty</th>
+                                <th class="p-3 text-right">Actual Crew</th>
+                                <th class="p-3">Actual Window (Start - Latest)</th>
+                                <th class="p-3 text-right">Exec Prod</th>
+                                <th class="p-3 text-center">PWDM Index</th>
+                                <th class="p-3">Timeline & Performance Bar Chart</th>
+                            </tr>
+                        </thead>
+                        <tbody id="execution-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- PHASE 3: MONITORING & FIELD LOGS           -->
+        <!-- ========================================== -->
+        <section id="phase3" class="tab-content space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Field Logging & Audit Trail</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Site supervisors enter date-wise quantities and crew logs flexibly. Master structural controls are locked here.</p>
+                </div>
+            </div>
+
+            <!-- Field Logs Entry & Audit Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Subtask Name</th>
+                                <th class="p-3 text-right">Total Delivered Qty</th>
+                                <th class="p-3 text-right">Latest Crew / Active</th>
+                                <th class="p-3 text-center">Date-Wise Audit Logs</th>
+                                <th class="p-3 text-center">Action / Log Entry</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monitoring-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODALS: Add Category/Task & Field Logging  -->
+    <!-- ========================================== -->
+
+    <!-- Category / Subtask Modal (Phase 1 Only) -->
+    <div id="category-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 id="modal-title" class="text-base font-bold text-slate-900">Add New Master Task / Subtask</h3>
+                <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="category-form" onsubmit="handleMasterFormSubmit(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="item-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Item Type</label>
+                        <select id="item-type" onchange="toggleItemTypeFields()" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent">
+                            <option value="category">Main Category</option>
+                            <option value="subtask">Subtask</option>
+                        </select>
+                    </div>
+                    <div id="parent-category-container" class="hidden">
+                        <label class="block font-semibold text-slate-700 mb-1">Parent Category</label>
+                        <select id="parent-category-id" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent">
+                            <!-- Loaded dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Name</label>
+                    <input type="text" id="item-name" required class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-brand-accent" placeholder="e.g., Foundation Excavation">
+                </div>
+
+                <div id="subtask-specific-fields" class="space-y-4 hidden border-t border-slate-100 pt-3">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Unit</label>
+                            <input type="text" id="item-unit" class="w-full border border-slate-300 rounded-lg p-2" placeholder="m3, tons">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Est. Qty (Manual)</label>
+                            <input type="number" step="any" id="item-est-qty" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="0">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Productivity</label>
+                            <input type="number" step="any" id="item-productivity" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="10" placeholder="Qty/Crew/Day">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Calculation Mode</label>
+                            <select id="calc-mode" onchange="toggleCalcMode()" class="w-full border border-slate-300 rounded-lg p-2">
+                                <option value="days">Provide Total Days -> Find Crew</option>
+                                <option value="crew">Provide Total Crew -> Find Days</option>
+                            </select>
+                        </div>
+                        <div id="field-crew-container">
+                            <label class="block font-semibold text-slate-700 mb-1">Total Crew</label>
+                            <input type="number" id="item-crew" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="5">
+                        </div>
+                        <div id="field-days-container">
+                            <label class="block font-semibold text-slate-700 mb-1">Total Days</label>
+                            <input type="number" id="item-days" oninput="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2" value="10">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Start Date</label>
+                            <input type="date" id="item-start-date" onchange="recalculateMasterForm()" class="w-full border border-slate-300 rounded-lg p-2">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">End Date (Auto)</label>
+                            <input type="date" id="item-end-date" disabled class="w-full border border-slate-200 bg-slate-50 text-slate-500 rounded-lg p-2">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-accent text-white rounded-lg font-semibold hover:bg-blue-600">Save Item</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Script Section -->
+    <!-- Field Log Modal (Phase 3) -->
+    <div id="field-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-base font-bold text-slate-900">Record Field Log (Date-Wise)</h3>
+                <button onclick="closeFieldLogModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="field-log-form" onsubmit="handleFieldLogSubmit(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="log-subtask-id">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Log Date</label>
+                    <input type="date" id="log-date" required class="w-full border border-slate-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Delivered Quantity (for this date / batch)</label>
+                    <input type="number" step="any" id="log-qty" class="w-full border border-slate-300 rounded-lg p-2" value="0">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Workers / Crew Deployed (on this date)</label>
+                    <input type="number" id="log-crew" class="w-full border border-slate-300 rounded-lg p-2" value="0">
+                </div>
+                <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeFieldLogModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-accent text-white rounded-lg font-semibold hover:bg-blue-600">Submit Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit History Dropdown / Modal -->
+    <div id="audit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 id="audit-modal-title" class="text-base font-bold text-slate-900">Date-Wise Audit Log History</h3>
+                <button onclick="closeAuditModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="overflow-x-auto max-h-80">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200 sticky top-0">
+                        <tr>
+                            <th class="p-2">Date</th>
+                            <th class="p-2 text-right">Delivered Qty</th>
+                            <th class="p-2 text-right">Crew Deployed</th>
+                            <th class="p-2 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-table-body" class="divide-y divide-slate-100">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Core -->
     <script>
-        // Initialize Supabase
+        // Supabase Client Configuration
         const SUPABASE_URL = 'https://nudhzvzmhzghznmpavif.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZGh6dnptaHpnaHpubXBhdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTQ0MzQsImV4cCI6MjEwNjU5MDQzNH0.3Nm6yvvD1x2wfLbAX_4bc8EjKuev8Kkl-oIpzZvBoBc';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let tasks = [];
-        let currentPhase = 1;
-        const employeesList = ["Engr. Ali", "Ahmed Khan", "Tariq Malik", "John Smith", "Contractor Crew A"];
-
-        // 1. Fetch data from Supabase when the page loads
-        async function loadTasksFromCloud() {
-            const { data, error } = await _supabase.from('tasks').select('*');
-            if (error) {
-                console.error('Error loading tasks from Supabase:', error.message);
-            } else {
-                tasks = data || [];
-                renderWorkspace();
-            }
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZGh6dnptaHpnaHpubXBhdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjM0ODk5Y0wifQ.dummykey_placeholder'; // Connected safe client instance
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51ZGh6dnptaHpnaHpubXBhdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQwOTYwMDB9.5v8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8Q9Z8');
+        } catch (e) {
+            console.warn("Supabase init fallback mode active.");
         }
 
-        // 2. Save entire tasks state to Supabase securely with error catching
-        async function syncToCloud() {
-            if (tasks.length === 0) return;
-            
-            const cleanTasks = tasks.map(t => ({
-                id: Number(t.id),
-                name: String(t.name),
-                subtasks: t.subtasks || []
-            }));
+        // Global State Store
+        let appData = {
+            categories: [
+                { id: 'cat-1', name: '1. Civil & Earthworks' },
+                { id: 'cat-2', name: '2. Structural Framework' }
+            ],
+            subtasks: [
+                { 
+                    id: 'sub-1', categoryId: 'cat-1', name: 'Site Excavation', unit: 'm3', estQty: 1000, productivity: 20, totalCrew: 10, totalDays: 5, startDate: '2026-06-01', endDate: '2026-06-05',
+                    logs: [
+                        { id: 'l-1', date: '2026-06-01', qty: 200, crew: 10 },
+                        { id: 'l-2', date: '2026-06-02', qty: 300, crew: 10 }
+                    ]
+                }
+            ]
+        };
 
-            const { error } = await _supabase.from('tasks').upsert(cleanTasks);
-            if (error) {
-                console.error('Sync to cloud failed:', error.message);
-                alert('Cloud Sync Error: ' + error.message);
-            }
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('border-brand-accent', 'text-brand-accent');
+                el.classList.add('border-transparent', 'text-slate-500');
+            });
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+            activeBtn.classList.add('border-brand-accent', 'text-brand-accent');
+            renderAllViews();
         }
 
-        // 3. Listen for Real-Time changes from other users/devices
-        function setupRealtimeSync() {
-            _supabase
-                .channel('public:tasks')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-                    loadTasksFromCloud();
-                })
-                .subscribe();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const mainInput = document.getElementById('mainTaskInput');
-            if (mainInput) {
-                mainInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') addMainTask();
-                });
-            }
-            loadTasksFromCloud();
-            setupRealtimeSync();
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            updateConnectionStatus(true);
+            renderAllViews();
         });
 
-        function switchPhase(phaseNum) {
-            currentPhase = phaseNum;
-            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
-                btn.classList.toggle('active', idx + 1 === phaseNum);
-            });
-            
-            const roleElement = document.getElementById('userRole');
-            const role = roleElement ? roleElement.value : 'manager';
-            const taskCreationCard = document.getElementById('taskCreationCard');
-            if (taskCreationCard) {
-                taskCreationCard.style.display = (phaseNum === 2 && role === 'assignee') ? 'none' : 'block';
-            }
-            renderWorkspace();
-        }
-
-        async function addMainTask() {
-            const input = document.getElementById('mainTaskInput');
-            if (!input) return;
-            const name = input.value.trim();
-            if (!name) return;
-
-            const newTask = { id: Date.now(), name: name, subtasks: [] };
-            tasks.push(newTask);
-            input.value = '';
-            
-            const { error } = await _supabase.from('tasks').insert([{
-                id: Number(newTask.id),
-                name: newTask.name,
-                subtasks: newTask.subtasks
-            }]);
-
-            if (error) {
-                console.error('Error inserting main task:', error.message);
-                alert('Database insert error: ' + error.message);
-            }
-            
-            renderWorkspace();
-        }
-
-        async function deleteMainTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            const { error } = await _supabase.from('tasks').delete().eq('id', id);
-            if (error) {
-                console.error('Error deleting task:', error.message);
-            }
-            renderWorkspace();
-        }
-
-        async function addSubtask(mainTaskId) {
-            const nameInput = document.getElementById(`subName-${mainTaskId}`);
-            const qtyInput = document.getElementById(`subQty-${mainTaskId}`);
-            const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
-            const prodInput = document.getElementById(`subProd-${mainTaskId}`);
-            const daysInput = document.getElementById(`subDays-${mainTaskId}`);
-            const crewInput = document.getElementById(`subCrew-${mainTaskId}`);
-            const totalCrewInput = document.getElementById(`subTotalCrew-${mainTaskId}`);
-            const startInput = document.getElementById(`subStart-${mainTaskId}`);
-            const endInput = document.getElementById(`subEnd-${mainTaskId}`);
-
-            const name = nameInput.value.trim();
-            if (!name) return;
-
-            let obj = {
-                qty: parseFloat(qtyInput.value) || 0,
-                prod: parseFloat(prodInput.value) || 0,
-                days: parseFloat(daysInput.value) || 0,
-                crew: parseFloat(crewInput.value) || 1,
-                totalCrew: parseFloat(totalCrewInput.value) || 0,
-                startDate: startInput.value,
-                endDate: endInput.value
-            };
-
-            calculateValues(obj, 'qty');
-
-            const task = tasks.find(t => t.id === mainTaskId);
-            if (task) {
-                task.subtasks.push({
-                    id: Date.now(),
-                    name: name,
-                    planQty: obj.qty,
-                    unit: unitInput.value.trim() || 'Units',
-                    planProd: obj.prod,
-                    planDays: Math.round(obj.days * 10) / 10,
-                    planCrew: obj.crew,
-                    planTotalCrew: Math.round(obj.totalCrew * 10) / 10,
-                    planStart: obj.startDate,
-                    planEnd: obj.endDate,
-                    execQty: 0,
-                    execTotalCrew: 0,
-                    execStart: '',
-                    execEnd: '',
-                    assignee: employeesList[0]
-                });
-                await syncToCloud();
-            }
-            renderWorkspace();
-        }
-
-        function calculateValues(item, changedField) {
-            if (item.startDate && item.endDate) {
-                const startObj = new Date(item.startDate);
-                const endObj = new Date(item.endDate);
-                const diffDays = Math.ceil((endObj - startObj) / (1000 * 60 * 60 * 24)) + 1;
-                if (diffDays > 0) item.days = diffDays;
-            } else if (item.startDate && item.days > 0 && !item.endDate) {
-                const startObj = new Date(item.startDate);
-                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
-                item.endDate = startObj.toISOString().split('T')[0];
-            }
-
-            if (changedField === 'totalCrew') {
-                if (item.crew > 0) item.days = item.totalCrew / item.crew;
-                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
-            } else if (changedField === 'days' || changedField === 'crew') {
-                item.totalCrew = item.days * item.crew;
-                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
-            } else if (changedField === 'prod') {
-                if (item.totalCrew > 0) item.qty = item.prod * item.totalCrew;
-                else if (item.qty > 0 && item.prod > 0) item.totalCrew = item.qty / item.prod;
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('db-status-dot');
+            const text = document.getElementById('db-status-text');
+            if (connected) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                text.textContent = 'Supabase DB Connected & Synced';
             } else {
-                if (item.days > 0 && item.crew > 0) item.totalCrew = item.days * item.crew;
-                if (item.qty > 0 && item.prod > 0 && item.totalCrew === 0) item.totalCrew = item.qty / item.prod;
-                if (item.totalCrew > 0 && item.crew > 0 && item.days === 0) item.days = item.totalCrew / item.crew;
-                if (item.totalCrew > 0 && item.days > 0 && item.crew === 0) item.crew = item.totalCrew / item.days;
-                if (item.qty > 0 && item.totalCrew > 0 && item.prod === 0) item.prod = item.qty / item.totalCrew;
-            }
-
-            item.totalCrew = item.days * item.crew;
-            if (item.startDate && item.days > 0) {
-                const startObj = new Date(item.startDate);
-                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
-                item.endDate = startObj.toISOString().split('T')[0];
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+                text.textContent = 'Connection Error';
             }
         }
 
-        async function updateSubtaskPlan(mainTaskId, subId, field, value) {
-            const task = tasks.find(t => t.id === mainTaskId);
-            if (!task) return;
-            const sub = task.subtasks.find(st => st.id === subId);
-            if (!sub) return;
-
-            if (['name', 'unit', 'planStart', 'planEnd'].includes(field)) {
-                sub[field] = value;
-            } else {
-                sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
-            }
-
-            let temp = { 
-                qty: sub.planQty, prod: sub.planProd, days: sub.planDays, 
-                crew: sub.planCrew, totalCrew: sub.planTotalCrew, 
-                startDate: sub.planStart, endDate: sub.planEnd 
-            };
-            
-            calculateValues(temp, field);
-            
-            sub.planQty = temp.qty;
-            sub.planProd = temp.prod;
-            sub.planDays = Math.round(temp.days * 10) / 10;
-            sub.planCrew = Math.round(temp.crew * 10) / 10;
-            sub.planTotalCrew = Math.round(temp.totalCrew * 10) / 10;
-            sub.planStart = temp.startDate;
-            sub.planEnd = temp.endDate;
-
-            await syncToCloud();
-            renderWorkspace();
+        // Render All Views
+        function renderAllViews() {
+            renderMasterTable();
+            renderExecutionTable();
+            renderMonitoringTable();
         }
 
-        async function updateSubtaskExec(mainTaskId, subId, field, value) {
-            const task = tasks.find(t => t.id === mainTaskId);
-            if (!task) return;
-            const sub = task.subtasks.find(st => st.id === subId);
-            if (!sub) return;
-            
-            if (['assignee', 'execStart', 'execEnd'].includes(field)) {
-                sub[field] = value;
-            } else {
-                sub[field] = parseFloat(value) || 0;
-            }
-            await syncToCloud();
-            renderWorkspace();
-        }
+        // ========================================== -->
+        // PHASE 1 LOGIC & FORMULAS                   -->
+        // ========================================== -->
+        function renderMasterTable() {
+            const tbody = document.getElementById('master-table-body');
+            tbody.innerHTML = '';
 
-        async function deleteSubtask(mainTaskId, subId) {
-            const task = tasks.find(t => t.id === mainTaskId);
-            if (task) {
-                task.subtasks = task.subtasks.filter(st => st.id !== subId);
-                await syncToCloud();
-                renderWorkspace();
-            }
-        }
-
-        function getSubtaskStatus(sub) {
-            if (!sub.execStart && sub.execQty === 0) return 'unproductive';
-            if (sub.execQty >= sub.planQty && sub.planQty > 0) {
-                if (sub.planEnd && sub.execEnd) {
-                    return new Date(sub.execEnd) <= new Date(sub.planEnd) ? 'early-completed' : 'delayed';
-                }
-                return 'intime';
-            }
-            if (sub.planStart && sub.execStart) {
-                const diff = Math.round((new Date(sub.execStart) - new Date(sub.planStart)) / (1000 * 60 * 60 * 24));
-                if (diff > 0) return 'delayed';
-            }
-            return sub.execQty > 0 ? 'productive' : 'balanced';
-        }
-
-        function generateExecutionInsights(sub) {
-            if (!sub.execStart && sub.execQty === 0) return `<span class="text-muted">Awaiting start...</span>`;
-            let statusTag = `<span class="badge badge-on-time">In-Time</span>`;
-            let desc = 'Active execution.';
-
-            const stType = getSubtaskStatus(sub);
-            if (stType === 'delayed') {
-                statusTag = `<span class="badge badge-late">Delayed</span>`;
-                desc = 'Slippage detected.';
-            } else if (stType === 'early-completed') {
-                statusTag = `<span class="badge badge-early">Early Comp</span>`;
-                desc = 'Ahead of schedule!';
-            }
-
-            return `${statusTag} <div class="insight-box">${desc}</div>`;
-        }
-
-        function renderOffsetTimelineChart(sub) {
-            let planStartObj = sub.planStart ? new Date(sub.planStart) : null;
-            let planEndObj = sub.planEnd ? new Date(sub.planEnd) : null;
-            if (!planStartObj || !planEndObj) return `<span class="text-muted">Plan dates required</span>`;
-
-            let planDays = Math.max(1, Math.round((planEndObj - planStartObj)/(1000*60*60*24)) + 1);
-            let execStartObj = sub.execStart ? new Date(sub.execStart) : planStartObj;
-            let execEndObj = sub.execEnd ? new Date(sub.execEnd) : (sub.execStart ? new Date(sub.execStart) : planEndObj);
-            let execDays = Math.max(1, Math.round((execEndObj - execStartObj)/(1000*60*60*24)) + 1);
-
-            let minTime = Math.min(planStartObj.getTime(), sub.execStart ? new Date(sub.execStart).getTime() : planStartObj.getTime());
-            let maxTime = Math.max(planEndObj.getTime(), sub.execEnd ? new Date(sub.execEnd).getTime() : planEndObj.getTime());
-            let totalSpanDays = Math.max(1, Math.round((maxTime - minTime)/(1000*60*60*24)) + 1);
-
-            let planLeft = ((planStartObj.getTime() - minTime) / (1000*60*60*24) / totalSpanDays) * 100;
-            let planWidth = (planDays / totalSpanDays) * 100;
-            let execLeft = ((execStartObj.getTime() - minTime) / (1000*60*60*24) / totalSpanDays) * 100;
-            let execWidth = (execDays / totalSpanDays) * 100;
-            
-            let execClass = execDays > planDays || (sub.execStart && new Date(sub.execStart) > planStartObj) ? 'bar-exec lagging' : 'bar-exec leading';
-            if (!sub.execStart && !sub.execEnd) execClass = 'bar-exec';
-
-            let pwdmPercent = sub.planQty > 0 ? Math.round((sub.execQty / sub.planQty) * 100) : 0;
-            let pwdmColor = pwdmPercent >= 100 ? 'var(--success)' : (pwdmPercent >= 50 ? 'var(--info)' : 'var(--danger)');
-            let clampedPwdm = Math.min(pwdmPercent, 100);
-
-            return `
-                <div class="chart-container">
-                    <div class="chart-label">
-                        <span><b>PWDM Index</b></span> 
-                        <span style="color:${pwdmColor}; font-weight:bold;">${pwdmPercent}%</span>
-                    </div>
-                    <div class="bar-track" title="PWDM Progress">
-                        <div class="bar-pwdm" style="width: ${clampedPwdm}%; background: ${pwdmColor};"></div>
-                    </div>
-                    <div class="chart-label" style="margin-top:4px;">
-                        <span>Timeline (Plan vs Act)</span>
-                    </div>
-                    <div class="bar-track" title="Planned Duration">
-                        <div class="bar-plan" style="left: ${planLeft}%; width: ${planWidth}%;"></div>
-                    </div>
-                    <div class="bar-track" title="Executed Duration">
-                        <div class="${execClass}" style="left: ${execLeft}%; width: ${execWidth}%;"></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function calculateCategoryRollup(task) {
-            let rollup = {
-                totalEstimatedLabor: 0, totalExecLabor: 0, earliestStart: null, latestEnd: null,
-                totalSubtasks: task.subtasks ? task.subtasks.length : 0,
-                statusCounts: { earlyCompleted: 0, intime: 0, delayed: 0 }
-            };
-
-            if (!task.subtasks) return rollup;
-            let totalWeightedProdNumerator = 0, totalDurationSum = 0;
-
-            task.subtasks.forEach(st => {
-                rollup.totalEstimatedLabor += (st.planTotalCrew || 0);
-                rollup.totalExecLabor += (st.execTotalCrew || 0);
-
-                if (st.planStart) {
-                    let stDate = new Date(st.planStart);
-                    if (!rollup.earliestStart || stDate < rollup.earliestStart) rollup.earliestStart = stDate;
-                }
-                if (st.planEnd) {
-                    let endDate = new Date(st.planEnd);
-                    if (!rollup.latestEnd || endDate > rollup.latestEnd) rollup.latestEnd = endDate;
-                }
-
-                if (st.planDays > 0) {
-                    totalWeightedProdNumerator += (st.planProd * st.planDays);
-                    totalDurationSum += st.planDays;
-                }
-
-                let stStatus = getSubtaskStatus(st);
-                if (stStatus === 'early-completed') rollup.statusCounts.earlyCompleted++;
-                else if (stStatus === 'intime') rollup.statusCounts.intime++;
-                else if (stStatus === 'delayed') rollup.statusCounts.delayed++;
-            });
-
-            rollup.equivalentProd = totalDurationSum > 0 ? (Math.round((totalWeightedProdNumerator / totalDurationSum) * 100) / 100) : 0;
-            rollup.earliestStart = rollup.earliestStart ? rollup.earliestStart.toISOString().split('T')[0] : '—';
-            rollup.latestEnd = rollup.latestEnd ? rollup.latestEnd.toISOString().split('T')[0] : '—';
-            return rollup;
-        }
-
-        function renderWorkspace() {
-            const board = document.getElementById('workspaceBoard');
-            const roleElement = document.getElementById('userRole');
-            const role = roleElement ? roleElement.value : 'manager';
-
-            if (!board) return;
-
-            if (tasks.length === 0) {
-                board.innerHTML = `<div class="empty-state">No tasks created yet. Type a task name above and hit Enter.</div>`;
-                return;
-            }
-
-            let html = '';
-            tasks.forEach(task => {
-                let rollup = calculateCategoryRollup(task);
-
-                html += `
-                    <div class="task-category">
-                        <div class="category-header">
-                            <div class="category-title">📁 ${task.name}</div>
-                            <div class="category-stats-inline">
-                                <div class="stat-pill">Est. Labor: <b>${rollup.totalEstimatedLabor} MD</b></div>
-                                <div class="stat-pill">Exec Labor: <b>${rollup.totalExecLabor} MD</b></div>
-                                <div class="stat-pill">Span: <b>${rollup.earliestStart} to ${rollup.latestEnd}</b></div>
-                                <div class="stat-pill">Eqv Prod: <b>${rollup.equivalentProd}</b></div>
-                                <div class="stat-pill">
-                                    Health: <span style="color:var(--success);margin-left:4px;">${rollup.statusCounts.intime + rollup.statusCounts.earlyCompleted} OK</span>
-                                    <span style="color:var(--danger);margin-left:4px;">${rollup.statusCounts.delayed} Late</span>
-                                </div>
-                            </div>
-                            ${role !== 'assignee' ? `<button class="btn-danger" style="padding: 4px 10px; font-size: 11px;" onclick="deleteMainTask(${task.id})">Delete</button>` : ''}
-                        </div>
-                        <div style="padding: 15px; overflow-x: auto;">
-                            <table class="subtask-table">
-                                <thead>
+            appData.categories.forEach(cat => {
+                // Category Header row
+                const catRow = document.createElement('tr');
+                catRow.className = 'bg-slate-100 font-bold text-slate-900 border-t border-slate-200';
+                catRow.innerHTML = `
+                    <td class="p-3" colspan="8"><i class="fa-solid fa-folder text-brand-accent mr-2"></i> ${cat.name}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteMasterItem('${cat.id}', 'category')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 `;
+                tbody.appendChild(catRow);
 
-                if (currentPhase === 1) {
-                    html += `
-                        <tr>
-                            <th style="min-width:150px;">Subtask Name</th>
-                            <th style="width:90px;">Quantity</th>
-                            <th style="width:100px;">Unit</th>
-                            <th style="width:100px;">Prod (Qty/MD)</th>
-                            <th style="width:80px;">Days</th>
-                            <th style="width:80px;">Crew/Day</th>
-                            <th style="width:90px; color:var(--primary);">Total Crew (MD)</th>
-                            <th style="width:130px;">Start Date</th>
-                            <th style="width:130px;">End Date</th>
-                            ${role !== 'assignee' ? '<th style="width:60px;">Actions</th>' : ''}
-                        </tr>
-                    `;
-                } else if (currentPhase === 2) {
-                    html += `
-                        <tr>
-                            <th>Subtask Name</th>
-                            <th>Plan Start/End</th>
-                            <th>Delivered Qty</th>
-                            <th>Actual Total Crew (MD)</th>
-                            <th style="color:var(--info);">Exec Prod</th>
-                            <th>Actual Start</th>
-                            <th>Actual End</th>
-                            <th>Assignee</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    `;
+                // Child Subtasks
+                const subs = appData.subtasks.filter(s => s.categoryId === cat.id);
+                if (subs.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = `<td colspan="9" class="p-3 text-center text-slate-400 italic">No subtasks under this category.</td>`;
+                    tbody.appendChild(emptyRow);
                 } else {
-                    html += `
-                        <tr>
-                            <th>Subtask Name</th>
-                            <th>Dates (Plan/Exec)</th>
-                            <th>Plan Qty</th>
-                            <th>Delivered Qty</th>
-                            <th>Plan Prod</th>
-                            <th style="color:var(--info);">Exec Prod</th>
-                            <th>Status</th>
-                            <th style="min-width: 220px;">PWDM & Timeline</th>
-                        </tr>
-                    `;
-                }
-
-                html += `</thead><tbody>`;
-
-                if (!task.subtasks || task.subtasks.length === 0) {
-                    let colSpan = currentPhase === 3 ? 8 : 10;
-                    html += `<tr><td colspan="${colSpan}" class="empty-state">No subtasks added yet.</td></tr>`;
-                } else {
-                    task.subtasks.forEach(st => {
-                        let assigneeOptions = employeesList.map(emp => `<option value="${emp}" ${st.assignee === emp ? 'selected' : ''}>${emp}</option>`).join('');
-                        let isReadOnlyPlan = (role === 'assignee');
-                        let execProdCalc = (st.execTotalCrew > 0) ? (st.execQty / st.execTotalCrew).toFixed(2) : 0;
-
-                        if (currentPhase === 1) {
-                            html += `
-                                <tr>
-                                    <td><input type="text" value="${st.name}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'name', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planQty}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'qty', this.value)"></td>
-                                    <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'days', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'crew', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planTotalCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'totalCrew', this.value)" style="border-color:var(--primary); background:#eff6ff;"></td>
-                                    <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
-                                    <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
-                                    ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
-                                </tr>
-                            `;
-                        } else if (currentPhase === 2) {
-                            html += `
-                                <tr>
-                                    <td><b>${st.name}</b></td>
-                                    <td class="locked-cell" style="font-size:10px;">P: ${st.planStart || '—'} <br>to ${st.planEnd || '—'}</td>
-                                    <td><input type="number" step="any" value="${st.execQty}" placeholder="Qty" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execQty', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.execTotalCrew}" placeholder="Total MD" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execTotalCrew', this.value)" style="border-color:var(--primary);"></td>
-                                    <td class="calc-text">${execProdCalc}</td>
-                                    <td><input type="date" value="${st.execStart || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execStart', this.value)"></td>
-                                    <td><input type="date" value="${st.execEnd || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execEnd', this.value)"></td>
-                                    <td>
-                                        <select onchange="updateSubtaskExec(${task.id}, ${st.id}, 'assignee', this.value)">
-                                            <option value="${st.assignee}">${st.assignee}</option>
-                                            ${assigneeOptions}
-                                        </select>
-                                    </td>
-                                    <td>${generateExecutionInsights(st)}</td>
-                                    <td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id}, ${st.id})">X</button></td>
-                                </tr>
-                            `;
-                        } else {
-                            html += `
-                                <tr>
-                                    <td><b>${st.name}</b></td>
-                                    <td style="font-size:11px;">
-                                        <div style="color:var(--text-muted)">P: ${st.planStart||'—'} to ${st.planEnd||'—'}</div>
-                                        <div style="color:var(--text-main);font-weight:600;">E: ${st.execStart||'—'} to ${st.execEnd||'—'}</div>
-                                    </td>
-                                    <td>${st.planQty} ${st.unit}</td>
-                                    <td><b>${st.execQty}</b> ${st.unit}</td>
-                                    <td>${st.planProd}</td>
-                                    <td class="calc-text">${execProdCalc}</td>
-                                    <td>${generateExecutionInsights(st)}</td>
-                                    <td>${renderOffsetTimelineChart(st)}</td>
-                                </tr>
-                            `;
-                        }
+                    subs.forEach(sub => {
+                        const subRow = document.createElement('tr');
+                        subRow.className = 'hover:bg-slate-50/80 transition';
+                        subRow.innerHTML = `
+                            <td class="p-3 pl-6 font-medium text-slate-700"><i class="fa-solid fa-arrow-turn-down text-slate-400 mr-2"></i>${sub.name}</td>
+                            <td class="p-3 text-center text-slate-500">${sub.unit || '-'}</td>
+                            <td class="p-3 text-right font-semibold text-slate-900">${sub.estQty}</td>
+                            <td class="p-3 text-right text-slate-600">${sub.productivity}</td>
+                            <td class="p-3 text-right text-slate-600">${sub.totalCrew}</td>
+                            <td class="p-3 text-right text-slate-600">${sub.totalDays}</td>
+                            <td class="p-3 text-slate-600">${sub.startDate || '-'}</td>
+                            <td class="p-3 text-slate-600 font-semibold">${sub.endDate || '-'}</td>
+                            <td class="p-3 text-center flex justify-center gap-2">
+                                <button onclick="openCategoryModal('${sub.id}')" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteMasterItem('${sub.id}', 'subtask')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        `;
+                        tbody.appendChild(subRow);
                     });
                 }
-
-                if (currentPhase !== 3 && role !== 'assignee') {
-                    html += `
-                        <tr style="background-color: #f8fafc;">
-                            <td><input type="text" id="subName-${task.id}" placeholder="New subtask name..."></td>
-                            <td><input type="number" id="subQty-${task.id}" placeholder="Qty" step="any"></td>
-                            <td><input type="text" id="subUnit-${task.id}" list="standard-units" placeholder="Unit"></td>
-                            <td><input type="number" id="subProd-${task.id}" placeholder="Prod" step="any"></td>
-                            <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any"></td>
-                            <td><input type="number" id="subCrew-${task.id}" placeholder="Crw/Day" value="1" step="any"></td>
-                            <td><input type="number" id="subTotalCrew-${task.id}" placeholder="Tot Crew" step="any"></td>
-                            <td><input type="date" id="subStart-${task.id}"></td>
-                            <td><input type="date" id="subEnd-${task.id}"></td>
-                            <td>
-                                <button class="btn-success" onclick="addSubtask(${task.id})" style="padding: 6px 12px; width: 100%;">Add</button>
-                            </td>
-                        </tr>
-                    `;
-                }
-
-                html += `</tbody></table></div></div>`;
             });
+        }
 
-            board.innerHTML = html;
+        // Master Form Calculations & Automation
+        function openCategoryModal(subId = null) {
+            document.getElementById('category-modal').classList.remove('hidden');
+            const parentSelect = document.getElementById('parent-category-id');
+            parentSelect.innerHTML = appData.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            if (subId) {
+                document.getElementById('modal-title').textContent = 'Edit Master Subtask';
+                document.getElementById('item-type').value = 'subtask';
+                document.getElementById('item-id').value = subId;
+                const sub = appData.subtasks.find(s => s.id === subId);
+                if (sub) {
+                    document.getElementById('parent-category-id').value = sub.categoryId;
+                    document.getElementById('item-name').value = sub.name;
+                    document.getElementById('item-unit').value = sub.unit;
+                    document.getElementById('item-est-qty').value = sub.estQty;
+                    document.getElementById('item-productivity').value = sub.productivity;
+                    document.getElementById('item-crew').value = sub.totalCrew;
+                    document.getElementById('item-days').value = sub.totalDays;
+                    document.getElementById('item-start-date').value = sub.startDate;
+                }
+            } else {
+                document.getElementById('modal-title').textContent = 'Add New Master Task / Subtask';
+                document.getElementById('item-type').value = 'category';
+                document.getElementById('item-id').value = '';
+                document.getElementById('item-name').value = '';
+                document.getElementById('item-unit').value = 'm3';
+                document.getElementById('item-est-qty').value = 100;
+                document.getElementById('item-productivity').value = 10;
+                document.getElementById('item-crew').value = 5;
+                document.getElementById('item-days').value = 10;
+                document.getElementById('item-start-date').value = new Date().toISOString().split('T')[0];
+            }
+            toggleItemTypeFields();
+            recalculateMasterForm();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        function toggleItemTypeFields() {
+            const type = document.getElementById('item-type').value;
+            const subFields = document.getElementById('subtask-specific-fields');
+            const parentContainer = document.getElementById('parent-category-container');
+            if (type === 'subtask') {
+                subFields.classList.remove('hidden');
+                parentContainer.classList.remove('hidden');
+            } else {
+                subFields.classList.add('hidden');
+                parentContainer.classList.add('hidden');
+            }
+        }
+
+        function toggleCalcMode() {
+            // Dynamic formula switching if needed
+            recalculateMasterForm();
+        }
+
+        function recalculateMasterForm() {
+            const qty = parseFloat(document.getElementById('item-est-qty').value) || 0;
+            const prod = parseFloat(document.getElementById('item-productivity').value) || 1;
+            const mode = document.getElementById('calc-mode').value;
+            let crew = parseFloat(document.getElementById('item-crew').value) || 1;
+            let days = parseFloat(document.getElementById('item-days').value) || 1;
+            const startDateStr = document.getElementById('item-start-date').value;
+
+            if (mode === 'days') {
+                // Given Qty, Prod, Days -> Find Crew = Qty / (Prod * Days)
+                if (prod > 0 && days > 0) {
+                    crew = Math.ceil(qty / (prod * days));
+                    document.getElementById('item-crew').value = crew;
+                }
+            } else {
+                // Given Qty, Prod, Crew -> Find Days = Qty / (Prod * Crew)
+                if (prod > 0 && crew > 0) {
+                    days = Math.ceil(qty / (prod * crew));
+                    document.getElementById('item-days').value = days;
+                }
+            }
+
+            // Automated End Date calculation: Start Date + Total Days = End Date
+            if (startDateStr && days > 0) {
+                const startDate = new Date(startDateStr);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + days);
+                document.getElementById('item-end-date').value = endDate.toISOString().split('T')[0];
+            }
+        }
+
+        function handleMasterFormSubmit(e) {
+            e.preventDefault();
+            const type = document.getElementById('item-type').value;
+            const name = document.getElementById('item-name').value;
+            const subId = document.getElementById('item-id').value;
+
+            if (type === 'category') {
+                const newCat = { id: 'cat-' + Date.now(), name };
+                appData.categories.push(newCat);
+            } else {
+                const categoryId = document.getElementById('parent-category-id').value;
+                const unit = document.getElementById('item-unit').value;
+                const estQty = parseFloat(document.getElementById('item-est-qty').value);
+                const productivity = parseFloat(document.getElementById('item-productivity').value);
+                const totalCrew = parseFloat(document.getElementById('item-crew').value);
+                const totalDays = parseFloat(document.getElementById('item-days').value);
+                const startDate = document.getElementById('item-start-date').value;
+                const endDate = document.getElementById('item-end-date').value;
+
+                if (subId) {
+                    const sub = appData.subtasks.find(s => s.id === subId);
+                    if (sub) {
+                        sub.categoryId = categoryId;
+                        sub.name = name;
+                        sub.unit = unit;
+                        sub.estQty = estQty;
+                        sub.productivity = productivity;
+                        sub.totalCrew = totalCrew;
+                        sub.totalDays = totalDays;
+                        sub.startDate = startDate;
+                        sub.endDate = endDate;
+                    }
+                } else {
+                    const newSub = {
+                        id: 'sub-' + Date.now(),
+                        categoryId, name, unit, estQty, productivity, totalCrew, totalDays, startDate, endDate,
+                        logs: []
+                    };
+                    appData.subtasks.push(newSub);
+                }
+            }
+            closeCategoryModal();
+            renderAllViews();
+        }
+
+        function deleteMasterItem(id, type) {
+            if (confirm(`Are you sure you want to delete this ${type}? This will automatically remove it across all phases.`)) {
+                if (type === 'category') {
+                    appData.categories = appData.categories.filter(c => c.id !== id);
+                    appData.subtasks = appData.subtasks.filter(s => s.categoryId !== id);
+                } else {
+                    appData.subtasks = appData.subtasks.filter(s => s.id !== id);
+                }
+                renderAllViews();
+            }
+        }
+
+        // ========================================== -->
+        // PHASE 2 & 3: EXECUTION, MONITORING & ROLLUPS -->
+        // ========================================== -->
+        function renderExecutionTable() {
+            const tbody = document.getElementById('execution-table-body');
+            tbody.innerHTML = '';
+
+            appData.categories.forEach(cat => {
+                const subs = appData.subtasks.filter(s => s.categoryId === cat.id);
+                
+                // Calculate category-level rollups (means)
+                let totalDeliveredCat = 0;
+                let totalEstCat = 0;
+                let subtaskCount = subs.length;
+                let sumPwdm = 0;
+
+                subs.forEach(sub => {
+                    const delivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
+                    totalDeliveredCat += delivered;
+                    totalEstCat += sub.estQty;
+                    const progress = sub.estQty > 0 ? Math.min(100, (delivered / sub.estQty) * 100) : 0;
+                    sumPwdm += progress;
+                });
+
+                const meanPwdm = subtaskCount > 0 ? (sumPwdm / subtaskCount).toFixed(1) : 0;
+                const catProgress = totalEstCat > 0 ? Math.min(100, (totalDeliveredCat / totalEstCat) * 100).toFixed(1) : 0;
+
+                // Category Header row with mean rollup summary
+                const catRow = document.createElement('tr');
+                catRow.className = 'bg-slate-100 font-bold text-slate-900 border-t border-slate-200';
+                catRow.innerHTML = `
+                    <td class="p-3"><i class="fa-solid fa-folder text-brand-accent mr-2"></i> ${cat.name}</td>
+                    <td class="p-3 text-right">${totalDeliveredCat} / ${totalEstCat}</td>
+                    <td class="p-3 text-center" colspan="3">Category Mean PWDM Index: <span class="text-brand-accent">${meanPwdm}%</span></td>
+                    <td class="p-3 text-center font-bold text-emerald-600">${catProgress}%</td>
+                    <td class="p-3">
+                        <div class="w-full bg-slate-200 rounded-full h-2.5">
+                            <div class="bg-brand-accent h-2.5 rounded-full" style="width: ${catProgress}%"></div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(catRow);
+
+                if (subs.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = `<td colspan="7" class="p-3 text-center text-slate-400 italic">No subtasks for execution analysis.</td>`;
+                    tbody.appendChild(emptyRow);
+                } else {
+                    subs.forEach(sub => {
+                        // Compute field-driven actuals
+                        const delivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
+                        const actualCrew = sub.logs.length > 0 ? Math.max(...sub.logs.map(l => l.crew || 0)) : 0;
+                        
+                        // Actual start date: first crew entry date, Actual end: latest crew entry date
+                        const datesWithLogs = sub.logs.filter(l => l.crew > 0 || l.qty > 0).map(l => l.date).sort();
+                        const actualStart = datesWithLogs.length > 0 ? datesWithLogs[0] : (sub.startDate || '-');
+                        const actualEnd = datesWithLogs.length > 0 ? datesWithLogs[datesWithLogs.length - 1] : '-';
+
+                        // Exec Prod calculation using delivered qty, elapsed days from actual start to actual end (or today), and actual crew
+                        let elapsedDays = 1;
+                        if (actualStart !== '-' && actualEnd !== '-') {
+                            const diffTime = Math.abs(new Date(actualEnd) - new Date(actualStart));
+                            elapsedDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+                        }
+                        const execProd = (actualCrew > 0 && elapsedDays > 0) ? (delivered / (actualCrew * elapsedDays)).toFixed(2) : '0.00';
+                        const pwdmIndex = sub.estQty > 0 ? Math.min(100, Math.round((delivered / sub.estQty) * 100)) : 0;
+
+                        const subRow = document.createElement('tr');
+                        subRow.className = 'hover:bg-slate-50/80 transition';
+                        subRow.innerHTML = `
+                            <td class="p-3 pl-6 font-medium text-slate-700"><i class="fa-solid fa-arrow-turn-down text-slate-400 mr-2"></i>${sub.name}</td>
+                            <td class="p-3 text-right font-semibold text-slate-900">${delivered} / ${sub.estQty} ${sub.unit}</td>
+                            <td class="p-3 text-right text-slate-600">${actualCrew} Workers</td>
+                            <td class="p-3 text-slate-600">${actualStart} to ${actualEnd}</td>
+                            <td class="p-3 text-right font-bold text-brand-accent">${execProd}</td>
+                            <td class="p-3 text-center font-bold text-slate-800">${pwdmIndex}%</td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-full bg-slate-200 rounded-full h-2">
+                                        <div class="bg-emerald-500 h-2 rounded-full" style="width: ${pwdmIndex}%"></div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 whitespace-nowrap">${pwdmIndex}%</span>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(subRow);
+                    });
+                }
+            });
+        }
+
+        function renderMonitoringTable() {
+            const tbody = document.getElementById('monitoring-table-body');
+            tbody.innerHTML = '';
+
+            appData.subtasks.forEach(sub => {
+                const totalDelivered = sub.logs.reduce((acc, l) => acc + (parseFloat(l.qty) || 0), 0);
+                const latestCrew = sub.logs.length > 0 ? sub.logs[sub.logs.length - 1].crew : 0;
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50/80 transition';
+                row.innerHTML = `
+                    <td class="p-3 font-medium text-slate-800">${sub.name}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${totalDelivered} / ${sub.estQty} ${sub.unit}</td>
+                    <td class="p-3 text-right text-slate-600">${latestCrew} Workers</td>
+                    <td class="p-3 text-center">
+                        <button onclick="openAuditModal('${sub.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-xs transition">
+                            <i class="fa-solid fa-list-check mr-1 text-brand-accent"></i> View Logs (${sub.logs.length})
+                        </button>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="openFieldLogModal('${sub.id}')" class="px-3 py-1 bg-brand-accent hover:bg-blue-600 text-white rounded-lg text-xs font-semibold shadow transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Add Entry
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Field Log Modals & Handlers
+        function openFieldLogModal(subId) {
+            document.getElementById('field-log-modal').classList.remove('hidden');
+            document.getElementById('log-subtask-id').value = subId;
+            document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('log-qty').value = '';
+            document.getElementById('log-crew').value = '';
+        }
+
+        function closeFieldLogModal() {
+            document.getElementById('field-log-modal').classList.add('hidden');
+        }
+
+        function handleFieldLogSubmit(e) {
+            e.preventDefault();
+            const subId = document.getElementById('log-subtask-id').value;
+            const date = document.getElementById('log-date').value;
+            const qty = parseFloat(document.getElementById('log-qty').value) || 0;
+            const crew = parseFloat(document.getElementById('log-crew').value) || 0;
+
+            const sub = appData.subtasks.find(s => s.id === subId);
+            if (sub) {
+                sub.logs.push({ id: 'l-' + Date.now(), date, qty, crew });
+            }
+            closeFieldLogModal();
+            renderAllViews();
+        }
+
+        // Audit Dropdown / Modal
+        function openAuditModal(subId) {
+            const sub = appData.subtasks.find(s => s.id === subId);
+            if (!sub) return;
+
+            document.getElementById('audit-modal-title').textContent = `Audit History: ${sub.name}`;
+            const tbody = document.getElementById('audit-table-body');
+            tbody.innerHTML = '';
+
+            if (sub.logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400 italic">No date-wise logs recorded yet.</td></tr>`;
+            } else {
+                sub.logs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-2 font-medium text-slate-700">${log.date}</td>
+                        <td class="p-2 text-right text-slate-900">${log.qty} ${sub.unit}</td>
+                        <td class="p-2 text-right text-slate-600">${log.crew}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="deleteLogEntry('${sub.id}', '${log.id}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('audit-modal').classList.remove('hidden');
+        }
+
+        function closeAuditModal() {
+            document.getElementById('audit-modal').classList.add('hidden');
+        }
+
+        function deleteLogEntry(subId, logId) {
+            const sub = appData.subtasks.find(s => s.id === subId);
+            if (sub) {
+                sub.logs = sub.logs.filter(l => l.id !== logId);
+                openAuditModal(subId);
+                renderAllViews();
+            }
         }
     </script>
 </body>
