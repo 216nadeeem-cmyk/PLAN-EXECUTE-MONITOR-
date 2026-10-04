@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPMS Dashboard - Plan, Execute & Monitor</title>
+    <title>R.F CONSTRUCTION CO. (PVT) LTD.</title>
     <!-- Include Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -31,6 +31,7 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            position: relative;
         }
 
         header {
@@ -42,18 +43,52 @@
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header Watermark */
+        header::after {
+            content: "";
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 120px;
+            height: 120px;
+            background: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=') no-repeat center/contain;
+            opacity: 0.04;
+            pointer-events: none;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #fff;
+            padding: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .header-title h1 {
             margin: 0;
             color: var(--primary);
-            font-size: 24px;
+            font-size: 22px;
         }
 
         .header-title p {
-            margin: 5px 0 0 0;
+            margin: 4px 0 0 0;
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         .role-selector {
@@ -140,6 +175,21 @@
             font-size: 12px;
         }
 
+        /* Workspace Board with Light Watermark */
+        #workspaceBoard {
+            position: relative;
+        }
+
+        #workspaceBoard::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=') no-repeat center/400px;
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: 0;
+        }
+
         .task-category {
             background: var(--card-bg);
             border-radius: 12px;
@@ -147,6 +197,8 @@
             margin-bottom: 25px;
             overflow: hidden;
             border: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
         }
 
         .category-header {
@@ -273,9 +325,12 @@
     <div class="container">
         <!-- Header -->
         <header>
-            <div class="header-title">
-                <h1>CPMS Dashboard</h1>
-                <p>Smart Planning, Logical Rollups, PWDM Tracking & Real-Time Performance Assessment.</p>
+            <div class="header-brand">
+                <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" alt="R.F Construction Logo" class="company-logo">
+                <div class="header-title">
+                    <h1>R.F CONSTRUCTION CO. (PVT) LTD.</h1>
+                    <p>PLAN-EXECUTE-MONITOR. (Follow - Perform - cheer)</p>
+                </div>
             </div>
             <div class="role-selector">
                 <label for="userRole">Simulate Role:</label>
@@ -853,4 +908,3 @@
     </script>
 </body>
 </html>
-
