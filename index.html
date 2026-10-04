@@ -68,14 +68,14 @@
         }
 
         .company-logo {
-            width: 50px;
-            height: 50px;
+            width: 55px;
+            height: 55px;
             object-fit: contain;
-            border-radius: 6px;
+            border-radius: 8px;
             border: 1px solid var(--border);
             background: #fff;
-            padding: 2px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .header-title h1 {
@@ -348,7 +348,7 @@
             <button class="tab-btn" onclick="switchPhase(3)">Phase 3: Executive Dashboard</button>
         </div>
 
-        <!-- Task Creation Card -->
+        <!-- Task Creation Card (Restricted strictly to Phase 1 & Manager role) -->
         <div class="card" id="taskCreationCard">
             <div class="task-input-bar">
                 <input type="text" id="mainTaskInput" placeholder="Enter Task Category or Summary Node (Press Enter)...">
@@ -431,13 +431,16 @@
             const roleElement = document.getElementById('userRole');
             const role = roleElement ? roleElement.value : 'manager';
             const taskCreationCard = document.getElementById('taskCreationCard');
+            
+            // Task creation card only visible in Phase 1 for managers
             if (taskCreationCard) {
-                taskCreationCard.style.display = (phaseNum === 2 && role === 'assignee') ? 'none' : 'block';
+                taskCreationCard.style.display = (phaseNum === 1 && role !== 'assignee') ? 'block' : 'none';
             }
             renderWorkspace();
         }
 
         async function addMainTask() {
+            if (currentPhase !== 1) return; // Prevent adding outside Phase 1
             const input = document.getElementById('mainTaskInput');
             if (!input) return;
             const name = input.value.trim();
@@ -462,6 +465,7 @@
         }
 
         async function deleteMainTask(id) {
+            if (currentPhase !== 1) return; // Prevent deleting outside Phase 1
             tasks = tasks.filter(t => t.id !== id);
             const { error } = await _supabase.from('tasks').delete().eq('id', id);
             if (error) {
@@ -471,6 +475,7 @@
         }
 
         async function addSubtask(mainTaskId) {
+            if (currentPhase !== 1) return; // Prevent adding subtasks outside Phase 1
             const nameInput = document.getElementById(`subName-${mainTaskId}`);
             const qtyInput = document.getElementById(`subQty-${mainTaskId}`);
             const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
@@ -558,6 +563,7 @@
         }
 
         async function updateSubtaskPlan(mainTaskId, subId, field, value) {
+            if (currentPhase !== 1) return;
             const task = tasks.find(t => t.id === mainTaskId);
             if (!task) return;
             const sub = task.subtasks.find(st => st.id === subId);
@@ -605,6 +611,7 @@
         }
 
         async function deleteSubtask(mainTaskId, subId) {
+            if (currentPhase !== 1) return; // Prevent deleting subtasks outside Phase 1
             const task = tasks.find(t => t.id === mainTaskId);
             if (task) {
                 task.subtasks = task.subtasks.filter(st => st.id !== subId);
@@ -738,10 +745,16 @@
             const roleElement = document.getElementById('userRole');
             const role = roleElement ? roleElement.value : 'manager';
 
+            // Ensure task creation card is strictly Phase 1 & Manager
+            const taskCreationCard = document.getElementById('taskCreationCard');
+            if (taskCreationCard) {
+                taskCreationCard.style.display = (currentPhase === 1 && role !== 'assignee') ? 'block' : 'none';
+            }
+
             if (!board) return;
 
             if (tasks.length === 0) {
-                board.innerHTML = `<div class="empty-state">No tasks created yet. Type a task name above and hit Enter.</div>`;
+                board.innerHTML = `<div class="empty-state">No tasks created yet. Type a task name above and hit Enter (Phase 1).</div>`;
                 return;
             }
 
@@ -763,7 +776,7 @@
                                     <span style="color:var(--danger);margin-left:4px;">${rollup.statusCounts.delayed} Late</span>
                                 </div>
                             </div>
-                            ${role !== 'assignee' ? `<button class="btn-danger" style="padding: 4px 10px; font-size: 11px;" onclick="deleteMainTask(${task.id})">Delete</button>` : ''}
+                            ${(currentPhase === 1 && role !== 'assignee') ? `<button class="btn-danger" style="padding: 4px 10px; font-size: 11px;" onclick="deleteMainTask(${task.id})">Delete</button>` : ''}
                         </div>
                         <div style="padding: 15px; overflow-x: auto;">
                             <table class="subtask-table">
@@ -797,7 +810,6 @@
                             <th>Actual End</th>
                             <th>Assignee</th>
                             <th>Status</th>
-                            <th>Actions</th>
                         </tr>
                     `;
                 } else {
@@ -818,7 +830,7 @@
                 html += `</thead><tbody>`;
 
                 if (!task.subtasks || task.subtasks.length === 0) {
-                    let colSpan = currentPhase === 3 ? 8 : 10;
+                    let colSpan = currentPhase === 3 ? 8 : (currentPhase === 2 ? 9 : 10);
                     html += `<tr><td colspan="${colSpan}" class="empty-state">No subtasks added yet.</td></tr>`;
                 } else {
                     task.subtasks.forEach(st => {
@@ -858,7 +870,6 @@
                                         </select>
                                     </td>
                                     <td>${generateExecutionInsights(st)}</td>
-                                    <td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id}, ${st.id})">X</button></td>
                                 </tr>
                             `;
                         } else {
@@ -881,7 +892,8 @@
                     });
                 }
 
-                if (currentPhase !== 3 && role !== 'assignee') {
+                // Subtask creation row strictly restricted to Phase 1 and non-assignees
+                if (currentPhase === 1 && role !== 'assignee') {
                     html += `
                         <tr style="background-color: #f8fafc;">
                             <td><input type="text" id="subName-${task.id}" placeholder="New subtask name..."></td>
