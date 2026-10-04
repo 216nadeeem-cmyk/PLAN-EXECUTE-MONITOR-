@@ -265,6 +265,17 @@
             color: var(--text-muted);
         }
 
+        .clickable-badge {
+            cursor: pointer;
+            color: var(--primary);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .clickable-badge:hover {
+            color: var(--primary-hover);
+        }
+
         .badge {
             display: inline-block;
             padding: 3px 8px;
@@ -308,6 +319,35 @@
             color: var(--text-muted);
             font-style: italic;
         }
+
+        /* Modal Popup Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .modal-header h3 { margin: 0; color: var(--primary); font-size: 18px; }
+        .close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted); }
     </style>
 
     <!-- Standard datalist for autocomplete units -->
@@ -348,7 +388,7 @@
             <button class="tab-btn" onclick="switchPhase(3)">Phase 3: Executive Dashboard</button>
         </div>
 
-        <!-- Task Creation Card (Restricted strictly to Phase 1 & Manager role) -->
+        <!-- Task Creation Card (Strictly Phase 1 & Manager) -->
         <div class="card" id="taskCreationCard">
             <div class="task-input-bar">
                 <input type="text" id="mainTaskInput" placeholder="Enter Task Category or Summary Node (Press Enter)...">
@@ -359,6 +399,17 @@
         <!-- Workspace Board -->
         <div id="workspaceBoard">
             <div class="empty-state">Loading tasks from cloud...</div>
+        </div>
+    </div>
+
+    <!-- Audit Popup Modal -->
+    <div id="auditModal" class="modal-overlay" onclick="closeAuditModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modalTitle">Audit Log</h3>
+                <button class="close-btn" onclick="closeAuditModal()">×</button>
+            </div>
+            <div id="modalBody"></div>
         </div>
     </div>
 
@@ -432,7 +483,6 @@
             const role = roleElement ? roleElement.value : 'manager';
             const taskCreationCard = document.getElementById('taskCreationCard');
             
-            // Task creation card only visible in Phase 1 for managers
             if (taskCreationCard) {
                 taskCreationCard.style.display = (phaseNum === 1 && role !== 'assignee') ? 'block' : 'none';
             }
@@ -440,7 +490,7 @@
         }
 
         async function addMainTask() {
-            if (currentPhase !== 1) return; // Prevent adding outside Phase 1
+            if (currentPhase !== 1) return;
             const input = document.getElementById('mainTaskInput');
             if (!input) return;
             const name = input.value.trim();
@@ -465,7 +515,7 @@
         }
 
         async function deleteMainTask(id) {
-            if (currentPhase !== 1) return; // Prevent deleting outside Phase 1
+            if (currentPhase !== 1) return;
             tasks = tasks.filter(t => t.id !== id);
             const { error } = await _supabase.from('tasks').delete().eq('id', id);
             if (error) {
@@ -475,7 +525,7 @@
         }
 
         async function addSubtask(mainTaskId) {
-            if (currentPhase !== 1) return; // Prevent adding subtasks outside Phase 1
+            if (currentPhase !== 1) return;
             const nameInput = document.getElementById(`subName-${mainTaskId}`);
             const qtyInput = document.getElementById(`subQty-${mainTaskId}`);
             const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
@@ -516,6 +566,8 @@
                     planEnd: obj.endDate,
                     execQty: 0,
                     execTotalCrew: 0,
+                    dailyQtyLogs: [],
+                    dailyCrewLogs: [],
                     execStart: '',
                     execEnd: '',
                     assignee: employeesList[0]
@@ -610,8 +662,101 @@
             renderWorkspace();
         }
 
+        // Add daily quantity log entry
+        async function addDailyQtyLog(mainTaskId, subId) {
+            const dateInput = document.getElementById(`logQtyDate-${subId}`);
+            const valInput = document.getElementById(`logQtyVal-${subId}`);
+            if (!dateInput || !valInput) return;
+
+            const date = dateInput.value;
+            const qty = parseFloat(valInput.value);
+            if (!date || isNaN(qty)) {
+                alert('Please provide both date and valid quantity.');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
+            if (!sub) return;
+
+            if (!sub.dailyQtyLogs) sub.dailyQtyLogs = [];
+            sub.dailyQtyLogs.push({ date, qty });
+            sub.execQty = sub.dailyQtyLogs.reduce((sum, item) => sum + item.qty, 0);
+
+            dateInput.value = '';
+            valInput.value = '';
+
+            await syncToCloud();
+            renderWorkspace();
+        }
+
+        // Add daily crew log entry
+        async function addDailyCrewLog(mainTaskId, subId) {
+            const dateInput = document.getElementById(`logCrewDate-${subId}`);
+            const valInput = document.getElementById(`logCrewVal-${subId}`);
+            if (!dateInput || !valInput) return;
+
+            const date = dateInput.value;
+            const crew = parseFloat(valInput.value);
+            if (!date || isNaN(crew)) {
+                alert('Please provide both date and valid crew/man-days count.');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === mainTaskId);
+            if (!task) return;
+            const sub = task.subtasks.find(st => st.id === subId);
+            if (!sub) return;
+
+            if (!sub.dailyCrewLogs) sub.dailyCrewLogs = [];
+            sub.dailyCrewLogs.push({ date, crew });
+            sub.execTotalCrew = sub.dailyCrewLogs.reduce((sum, item) => sum + item.crew, 0);
+
+            dateInput.value = '';
+            valInput.value = '';
+
+            await syncToCloud();
+            renderWorkspace();
+        }
+
+        // Show audit logs popup modal
+        function showAuditModal(type, subName, logs) {
+            const modal = document.getElementById('auditModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            title.innerText = `${type} Audit Log — ${subName}`;
+            
+            if (!logs || logs.length === 0) {
+                body.innerHTML = `<p class="text-muted">No date-wise logs recorded yet.</p>`;
+            } else {
+                let tableHtml = `
+                    <table class="subtask-table" style="margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>${type === 'Quantity' ? 'Delivered Qty' : 'Crew / Man-Days'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                logs.forEach(l => {
+                    tableHtml += `<tr><td>${l.date}</td><td><b>${type === 'Quantity' ? l.qty : l.crew}</b></td></tr>`;
+                });
+                tableHtml += `</tbody></table>`;
+                body.innerHTML = tableHtml;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeAuditModal() {
+            document.getElementById('auditModal').style.display = 'none';
+        }
+
         async function deleteSubtask(mainTaskId, subId) {
-            if (currentPhase !== 1) return; // Prevent deleting subtasks outside Phase 1
+            if (currentPhase !== 1) return;
             const task = tasks.find(t => t.id === mainTaskId);
             if (task) {
                 task.subtasks = task.subtasks.filter(st => st.id !== subId);
@@ -745,7 +890,6 @@
             const roleElement = document.getElementById('userRole');
             const role = roleElement ? roleElement.value : 'manager';
 
-            // Ensure task creation card is strictly Phase 1 & Manager
             const taskCreationCard = document.getElementById('taskCreationCard');
             if (taskCreationCard) {
                 taskCreationCard.style.display = (currentPhase === 1 && role !== 'assignee') ? 'block' : 'none';
@@ -801,15 +945,15 @@
                 } else if (currentPhase === 2) {
                     html += `
                         <tr>
-                            <th>Subtask Name</th>
-                            <th>Plan Start/End</th>
-                            <th>Delivered Qty</th>
-                            <th>Actual Total Crew (MD)</th>
-                            <th style="color:var(--info);">Exec Prod</th>
-                            <th>Actual Start</th>
-                            <th>Actual End</th>
-                            <th>Assignee</th>
-                            <th>Status</th>
+                            <th style="min-width:140px;">Subtask Name</th>
+                            <th style="width:110px;">Plan Start/End</th>
+                            <th style="min-width:200px;">Delivered Qty (Sum & Date-wise)</th>
+                            <th style="min-width:200px;">Crew / Labor (Sum & Date-wise)</th>
+                            <th style="color:var(--info); width:80px;">Exec Prod</th>
+                            <th style="width:120px;">Actual Start</th>
+                            <th style="width:120px;">Actual End</th>
+                            <th style="width:130px;">Assignee</th>
+                            <th style="width:140px;">Status</th>
                         </tr>
                     `;
                 } else {
@@ -837,6 +981,10 @@
                         let assigneeOptions = employeesList.map(emp => `<option value="${emp}" ${st.assignee === emp ? 'selected' : ''}>${emp}</option>`).join('');
                         let isReadOnlyPlan = (role === 'assignee');
                         let execProdCalc = (st.execTotalCrew > 0) ? (st.execQty / st.execTotalCrew).toFixed(2) : 0;
+                        
+                        // Ensure arrays exist
+                        if (!st.dailyQtyLogs) st.dailyQtyLogs = [];
+                        if (!st.dailyCrewLogs) st.dailyCrewLogs = [];
 
                         if (currentPhase === 1) {
                             html += `
@@ -858,8 +1006,31 @@
                                 <tr>
                                     <td><b>${st.name}</b></td>
                                     <td class="locked-cell" style="font-size:10px;">P: ${st.planStart || '—'} <br>to ${st.planEnd || '—'}</td>
-                                    <td><input type="number" step="any" value="${st.execQty}" placeholder="Qty" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execQty', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.execTotalCrew}" placeholder="Total MD" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execTotalCrew', this.value)" style="border-color:var(--primary);"></td>
+                                    
+                                    <!-- Delivered Qty Dual Cell & Popup Trigger -->
+                                    <td>
+                                        <div style="margin-bottom:6px;">
+                                            Total: <span class="clickable-badge" onclick='showAuditModal("Quantity", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyQtyLogs)})'><b>${st.execQty}</b> ${st.unit}</span>
+                                        </div>
+                                        <div style="display:flex; gap:4px;">
+                                            <input type="date" id="logQtyDate-${st.id}" style="width:110px;" />
+                                            <input type="number" step="any" id="logQtyVal-${st.id}" placeholder="+ Qty" style="width:70px;" />
+                                            <button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="addDailyQtyLog(${task.id}, ${st.id})">Add</button>
+                                        </div>
+                                    </td>
+
+                                    <!-- Crew Dual Cell & Popup Trigger -->
+                                    <td>
+                                        <div style="margin-bottom:6px;">
+                                            Total: <span class="clickable-badge" onclick='showAuditModal("Crew", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyCrewLogs)})'><b>${st.execTotalCrew} MD</b></span>
+                                        </div>
+                                        <div style="display:flex; gap:4px;">
+                                            <input type="date" id="logCrewDate-${st.id}" style="width:110px;" />
+                                            <input type="number" step="any" id="logCrewVal-${st.id}" placeholder="+ Crew" style="width:70px;" />
+                                            <button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="addDailyCrewLog(${task.id}, ${st.id})">Add</button>
+                                        </div>
+                                    </td>
+
                                     <td class="calc-text">${execProdCalc}</td>
                                     <td><input type="date" value="${st.execStart || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execStart', this.value)"></td>
                                     <td><input type="date" value="${st.execEnd || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execEnd', this.value)"></td>
@@ -892,7 +1063,6 @@
                     });
                 }
 
-                // Subtask creation row strictly restricted to Phase 1 and non-assignees
                 if (currentPhase === 1 && role !== 'assignee') {
                     html += `
                         <tr style="background-color: #f8fafc;">
