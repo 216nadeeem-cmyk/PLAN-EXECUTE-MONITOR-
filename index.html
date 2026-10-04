@@ -581,8 +581,15 @@
             const sub = task.subtasks.find(st => st.id === subId);
             if (!sub) return;
 
+            // Correct property mapping to avoid undefined nested fields like planPlanDays
             if (['name', 'unit', 'planStart', 'planEnd'].includes(field)) {
                 sub[field] = value;
+            } else if (field === 'planDays' || field === 'days') {
+                sub.planDays = parseFloat(value) || 0;
+            } else if (field === 'qty') {
+                sub.planQty = parseFloat(value) || 0;
+            } else if (field === 'prod') {
+                sub.planProd = parseFloat(value) || 0;
             } else {
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
