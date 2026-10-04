@@ -541,8 +541,8 @@
             let startDate = startInput.value;
             let endDate = endInput.value;
 
-            // Apply User Formula: Total Crew (MD) = (Productivity * Days) / Quantity
-            let totalCrew = (qty > 0) ? Math.round(((prod * days) / qty) * 10) / 10 : 0;
+            // Total Crew (Total Men / Headcount) = Qty / (Productivity * Days)
+            let totalCrew = (prod > 0 && days > 0) ? Math.round((qty / (prod * days)) * 10) / 10 : 0;
 
             if (startDate && endDate) {
                 const diffDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
@@ -587,9 +587,9 @@
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
 
-            // Apply User Formula: Total Crew (MD) = (Productivity * Days) / Quantity
-            if (sub.planQty > 0) {
-                sub.planTotalCrew = Math.round(((sub.planProd * sub.planDays) / sub.planQty) * 10) / 10;
+            // Total Crew (Total Men / Headcount) = Qty / (Productivity * Days)
+            if (sub.planProd > 0 && sub.planDays > 0) {
+                sub.planTotalCrew = Math.round((sub.planQty / (sub.planProd * sub.planDays)) * 10) / 10;
             } else {
                 sub.planTotalCrew = 0;
             }
@@ -654,7 +654,7 @@
             const date = dateInput.value;
             const crew = parseFloat(valInput.value);
             if (!date || isNaN(crew)) {
-                alert('Please provide both date and valid crew/man-days count.');
+                alert('Please provide both date and valid crew count.');
                 return;
             }
 
@@ -711,7 +711,7 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>${type === 'Quantity' ? 'Delivered Qty' : 'Crew / Man-Days'}</th>
+                                <th>${type === 'Quantity' ? 'Delivered Qty' : 'Crew Headcount'}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -986,7 +986,7 @@
                             <th style="width:100px;">Unit</th>
                             <th style="width:100px;">Prod (Qty/MD)</th>
                             <th style="width:80px;">Days</th>
-                            <th style="width:90px; color:var(--primary);">Total Crew (MD)</th>
+                            <th style="width:100px; color:var(--primary);">Total Crew (Men)</th>
                             <th style="width:130px;">Start Date</th>
                             <th style="width:130px;">End Date</th>
                             ${role !== 'assignee' ? '<th style="width:60px;">Actions</th>' : ''}
@@ -1037,14 +1037,14 @@
                         if (currentPhase === 1) {
                             html += `
                                 <tr>
-                                    <td><input type="text" value="${st.name}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'name', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planQty}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'qty', this.value)"></td>
-                                    <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="border-color:var(--primary); background:#eff6ff;" title="Calculated as (Productivity * Days) / Quantity"></td>
-                                    <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
-                                    <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
+                                    <td><input type="text" value="${st.name}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'name', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planQty}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'qty', this.value)"></td>
+                                    <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="border-color:var(--primary); background:#eff6ff;" title="Total Men = Qty / (Prod * Days)"></td>
+                                    <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
+                                    <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onblur="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
                                     ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
                                 </tr>
                             `;
@@ -1067,11 +1067,11 @@
 
                                     <td>
                                         <div style="margin-bottom:6px;">
-                                            Total: <span class="clickable-badge" onclick='showAuditModal("Crew", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyCrewLogs)})'><b>${st.execTotalCrew} MD</b></span>
+                                            Total: <span class="clickable-badge" onclick='showAuditModal("Crew", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyCrewLogs)})'><b>${st.execTotalCrew} Men</b></span>
                                         </div>
                                         <div style="display:flex; gap:4px;">
                                             <input type="date" id="logCrewDate-${st.id}" style="width:110px;" />
-                                            <input type="number" step="any" id="logCrewVal-${st.id}" placeholder="+ Crew" style="width:70px;" />
+                                            <input type="number" step="any" id="logCrewVal-${st.id}" placeholder="+ Men" style="width:70px;" />
                                             <button class="btn-success" style="padding:4px 8px; font-size:11px;" onclick="addDailyCrewLog(${task.id}, ${st.id})">Add</button>
                                         </div>
                                     </td>
