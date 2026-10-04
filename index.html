@@ -290,6 +290,7 @@
 
         .chart-container {
             font-size: 11px;
+            min-width: 180px;
         }
 
         .chart-label {
@@ -307,7 +308,7 @@
             overflow: hidden;
         }
 
-        .bar-pwdm { height: 100%; background: var(--success); border-radius: 3px; }
+        .bar-pwdm { height: 100%; border-radius: 3px; }
         .bar-plan { position: absolute; height: 100%; background: #94a3b8; border-radius: 3px; }
         .bar-exec { position: absolute; height: 100%; background: var(--primary); border-radius: 3px; opacity: 0.8; }
         .bar-exec.lagging { background: var(--danger); }
@@ -531,7 +532,6 @@
             const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
             const prodInput = document.getElementById(`subProd-${mainTaskId}`);
             const daysInput = document.getElementById(`subDays-${mainTaskId}`);
-            const crewInput = document.getElementById(`subCrew-${mainTaskId}`);
             const totalCrewInput = document.getElementById(`subTotalCrew-${mainTaskId}`);
             const startInput = document.getElementById(`subStart-${mainTaskId}`);
             const endInput = document.getElementById(`subEnd-${mainTaskId}`);
@@ -539,31 +539,41 @@
             const name = nameInput.value.trim();
             if (!name) return;
 
-            let obj = {
-                qty: parseFloat(qtyInput.value) || 0,
-                prod: parseFloat(prodInput.value) || 0,
-                days: parseFloat(daysInput.value) || 0,
-                crew: parseFloat(crewInput.value) || 1,
-                totalCrew: parseFloat(totalCrewInput.value) || 0,
-                startDate: startInput.value,
-                endDate: endInput.value
-            };
+            let qty = parseFloat(qtyInput.value) || 0;
+            let prod = parseFloat(prodInput.value) || 0;
+            let days = parseFloat(daysInput.value) || 0;
+            let totalCrew = parseFloat(totalCrewInput.value) || 0;
+            let startDate = startInput.value;
+            let endDate = endInput.value;
 
-            calculateValues(obj, 'qty');
+            // Date & Days calculations
+            if (startDate && endDate) {
+                const diffDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+                if (diffDays > 0) days = diffDays;
+            } else if (startDate && days > 0 && !endDate) {
+                const startObj = new Date(startDate);
+                startObj.setDate(startObj.getDate() + Math.round(days) - 1);
+                endDate = startObj.toISOString().split('T')[0];
+            }
+
+            if (totalCrew === 0 && days > 0 && prod > 0 && qty > 0) {
+                totalCrew = qty / prod;
+            } else if (totalCrew === 0 && prod > 0 && days > 0) {
+                qty = prod * totalCrew;
+            }
 
             const task = tasks.find(t => t.id === mainTaskId);
             if (task) {
                 task.subtasks.push({
                     id: Date.now(),
                     name: name,
-                    planQty: obj.qty,
+                    planQty: qty,
                     unit: unitInput.value.trim() || 'Units',
-                    planProd: obj.prod,
-                    planDays: Math.round(obj.days * 10) / 10,
-                    planCrew: obj.crew,
-                    planTotalCrew: Math.round(obj.totalCrew * 10) / 10,
-                    planStart: obj.startDate,
-                    planEnd: obj.endDate,
+                    planProd: prod,
+                    planDays: Math.round(days * 10) / 10,
+                    planTotalCrew: Math.round(totalCrew * 10) / 10,
+                    planStart: startDate,
+                    planEnd: endDate,
                     execQty: 0,
                     execTotalCrew: 0,
                     dailyQtyLogs: [],
@@ -573,43 +583,6 @@
                 await syncToCloud();
             }
             renderWorkspace();
-        }
-
-        function calculateValues(item, changedField) {
-            if (item.startDate && item.endDate) {
-                const startObj = new Date(item.startDate);
-                const endObj = new Date(item.endDate);
-                const diffDays = Math.ceil((endObj - startObj) / (1000 * 60 * 60 * 24)) + 1;
-                if (diffDays > 0) item.days = diffDays;
-            } else if (item.startDate && item.days > 0 && !item.endDate) {
-                const startObj = new Date(item.startDate);
-                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
-                item.endDate = startObj.toISOString().split('T')[0];
-            }
-
-            if (changedField === 'totalCrew') {
-                if (item.crew > 0) item.days = item.totalCrew / item.crew;
-                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
-            } else if (changedField === 'days' || changedField === 'crew') {
-                item.totalCrew = item.days * item.crew;
-                if (item.prod > 0) item.qty = item.prod * item.totalCrew;
-            } else if (changedField === 'prod') {
-                if (item.totalCrew > 0) item.qty = item.prod * item.totalCrew;
-                else if (item.qty > 0 && item.prod > 0) item.totalCrew = item.qty / item.prod;
-            } else {
-                if (item.days > 0 && item.crew > 0) item.totalCrew = item.days * item.crew;
-                if (item.qty > 0 && item.prod > 0 && item.totalCrew === 0) item.totalCrew = item.qty / item.prod;
-                if (item.totalCrew > 0 && item.crew > 0 && item.days === 0) item.days = item.totalCrew / item.crew;
-                if (item.totalCrew > 0 && item.days > 0 && item.crew === 0) item.crew = item.totalCrew / item.days;
-                if (item.qty > 0 && item.totalCrew > 0 && item.prod === 0) item.prod = item.qty / item.totalCrew;
-            }
-
-            item.totalCrew = item.days * item.crew;
-            if (item.startDate && item.days > 0) {
-                const startObj = new Date(item.startDate);
-                startObj.setDate(startObj.getDate() + Math.round(item.days) - 1);
-                item.endDate = startObj.toISOString().split('T')[0];
-            }
         }
 
         async function updateSubtaskPlan(mainTaskId, subId, field, value) {
@@ -625,21 +598,17 @@
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
 
-            let temp = { 
-                qty: sub.planQty, prod: sub.planProd, days: sub.planDays, 
-                crew: sub.planCrew, totalCrew: sub.planTotalCrew, 
-                startDate: sub.planStart, endDate: sub.planEnd 
-            };
-            
-            calculateValues(temp, field);
-            
-            sub.planQty = temp.qty;
-            sub.planProd = temp.prod;
-            sub.planDays = Math.round(temp.days * 10) / 10;
-            sub.planCrew = Math.round(temp.crew * 10) / 10;
-            sub.planTotalCrew = Math.round(temp.totalCrew * 10) / 10;
-            sub.planStart = temp.startDate;
-            sub.planEnd = temp.endDate;
+            // Recalculate dates/days securely without mutual interference
+            if (field === 'planStart' || field === 'planEnd') {
+                if (sub.planStart && sub.planEnd) {
+                    const diffDays = Math.ceil((new Date(sub.planEnd) - new Date(sub.planStart)) / (1000 * 60 * 60 * 24)) + 1;
+                    if (diffDays > 0) sub.planDays = diffDays;
+                }
+            } else if (field === 'planDays' && sub.planStart) {
+                const startObj = new Date(sub.planStart);
+                startObj.setDate(startObj.getDate() + Math.round(sub.planDays) - 1);
+                sub.planEnd = startObj.toISOString().split('T')[0];
+            }
 
             await syncToCloud();
             renderWorkspace();
@@ -655,7 +624,6 @@
             renderWorkspace();
         }
 
-        // Add daily quantity log entry
         async function addDailyQtyLog(mainTaskId, subId) {
             const dateInput = document.getElementById(`logQtyDate-${subId}`);
             const valInput = document.getElementById(`logQtyVal-${subId}`);
@@ -686,7 +654,6 @@
             renderWorkspace();
         }
 
-        // Add daily crew log entry & automatically derive execution dates
         async function addDailyCrewLog(mainTaskId, subId) {
             const dateInput = document.getElementById(`logCrewDate-${subId}`);
             const valInput = document.getElementById(`logCrewVal-${subId}`);
@@ -717,7 +684,6 @@
             renderWorkspace();
         }
 
-        // Helper to derive actual start and end dates from logs
         function updateSubtaskDerivedDates(sub) {
             let allDates = [];
             if (sub.dailyQtyLogs) sub.dailyQtyLogs.forEach(l => allDates.push(l.date));
@@ -738,7 +704,6 @@
             }
         }
 
-        // Show audit logs popup modal
         function showAuditModal(type, subName, logs) {
             const modal = document.getElementById('auditModal');
             const title = document.getElementById('modalTitle');
@@ -815,6 +780,15 @@
             return `${statusTag} <div class="insight-box">${desc}</div>`;
         }
 
+        // Calculate Subtask PWDM using exact productivity ratio formula
+        function calculateSubtaskPwdm(sub) {
+            if (!sub.planQty || !sub.planTotalCrew || !sub.execTotalCrew) return 0;
+            // Formula: ((Qe * Cp * Dp) / (Qp * Ce * De)) * 100
+            // Note: planTotalCrew = Cp * Dp, execTotalCrew = Ce * De (derived from daily logs)
+            let ratio = (sub.execQty * sub.planTotalCrew) / (sub.planQty * sub.execTotalCrew);
+            return Math.round(ratio * 100);
+        }
+
         function renderOffsetTimelineChart(sub) {
             let planStartObj = sub.planStart ? new Date(sub.planStart) : null;
             let planEndObj = sub.planEnd ? new Date(sub.planEnd) : null;
@@ -837,9 +811,9 @@
             let execClass = execDays > planDays || (sub.execStart && new Date(sub.execStart) > planStartObj) ? 'bar-exec lagging' : 'bar-exec leading';
             if (!sub.execStart && !sub.execEnd) execClass = 'bar-exec';
 
-            let pwdmPercent = sub.planQty > 0 ? Math.round((sub.execQty / sub.planQty) * 100) : 0;
-            let pwdmColor = pwdmPercent >= 100 ? 'var(--success)' : (pwdmPercent >= 50 ? 'var(--info)' : 'var(--danger)');
-            let clampedPwdm = Math.min(pwdmPercent, 100);
+            let pwdmPercent = calculateSubtaskPwdm(sub);
+            let pwdmColor = pwdmPercent >= 100 ? 'var(--success)' : 'var(--danger)';
+            let clampedPwdm = Math.min(pwdmPercent, 200);
 
             return `
                 <div class="chart-container">
@@ -847,7 +821,7 @@
                         <span><b>PWDM Index</b></span> 
                         <span style="color:${pwdmColor}; font-weight:bold;">${pwdmPercent}%</span>
                     </div>
-                    <div class="bar-track" title="PWDM Progress">
+                    <div class="bar-track" title="PWDM Benchmark (100%)">
                         <div class="bar-pwdm" style="width: ${clampedPwdm}%; background: ${pwdmColor};"></div>
                     </div>
                     <div class="chart-label" style="margin-top:4px;">
@@ -865,10 +839,10 @@
 
         function calculateCategoryRollup(task) {
             let rollup = {
-                totalEstimatedLabor: 0, totalExecLabor: 0, earliestStart: null, latestEnd: null,
-                totalSubtasks: task.subtasks ? task.subtasks.length : 0,
+                totalEstimatedLabor: 0, totalExecLabor: 0, earliestPlanStart: null, latestPlanEnd: null,
+                earliestExecStart: null, latestExecEnd: null, totalSubtasks: task.subtasks ? task.subtasks.length : 0,
                 statusCounts: { earlyCompleted: 0, intime: 0, delayed: 0 },
-                meanPwdm: 0, meanPerformance: 'On Track'
+                meanPwdm: 0
             };
 
             if (!task.subtasks || task.subtasks.length === 0) return rollup;
@@ -881,11 +855,20 @@
 
                 if (st.planStart) {
                     let stDate = new Date(st.planStart);
-                    if (!rollup.earliestStart || stDate < rollup.earliestStart) rollup.earliestStart = stDate;
+                    if (!rollup.earliestPlanStart || stDate < rollup.earliestPlanStart) rollup.earliestPlanStart = stDate;
                 }
                 if (st.planEnd) {
                     let endDate = new Date(st.planEnd);
-                    if (!rollup.latestEnd || endDate > rollup.latestEnd) rollup.latestEnd = endDate;
+                    if (!rollup.latestPlanEnd || endDate > rollup.latestPlanEnd) rollup.latestPlanEnd = endDate;
+                }
+
+                if (st.execStart) {
+                    let exDate = new Date(st.execStart);
+                    if (!rollup.earliestExecStart || exDate < rollup.earliestExecStart) rollup.earliestExecStart = exDate;
+                }
+                if (st.execEnd) {
+                    let exEndDate = new Date(st.execEnd);
+                    if (!rollup.latestExecEnd || exEndDate > rollup.latestExecEnd) rollup.latestExecEnd = exEndDate;
                 }
 
                 if (st.planDays > 0) {
@@ -893,8 +876,7 @@
                     totalDurationSum += st.planDays;
                 }
 
-                let pwdmPercent = st.planQty > 0 ? (st.execQty / st.planQty) * 100 : 0;
-                totalPwdmSum += Math.min(pwdmPercent, 200); // cap runaway numbers for mean
+                totalPwdmSum += calculateSubtaskPwdm(st);
 
                 let stStatus = getSubtaskStatus(st);
                 if (stStatus === 'early-completed') rollup.statusCounts.earlyCompleted++;
@@ -904,8 +886,10 @@
 
             rollup.meanPwdm = Math.round(totalPwdmSum / task.subtasks.length);
             rollup.equivalentProd = totalDurationSum > 0 ? (Math.round((totalWeightedProdNumerator / totalDurationSum) * 100) / 100) : 0;
-            rollup.earliestStart = rollup.earliestStart ? rollup.earliestStart.toISOString().split('T')[0] : '—';
-            rollup.latestEnd = rollup.latestEnd ? rollup.latestEnd.toISOString().split('T')[0] : '—';
+            
+            rollup.planSpanStr = `${rollup.earliestPlanStart ? rollup.earliestPlanStart.toISOString().split('T')[0] : '—'} to ${rollup.latestPlanEnd ? rollup.latestPlanEnd.toISOString().split('T')[0] : '—'}`;
+            rollup.execSpanStr = `${rollup.earliestExecStart ? rollup.earliestExecStart.toISOString().split('T')[0] : '—'} to ${rollup.latestExecEnd ? rollup.latestExecEnd.toISOString().split('T')[0] : '—'}`;
+
             return rollup;
         }
 
@@ -929,17 +913,30 @@
             let html = '';
             tasks.forEach(task => {
                 let rollup = calculateCategoryRollup(task);
-                let meanPwdmColor = rollup.meanPwdm >= 100 ? 'var(--success)' : (rollup.meanPwdm >= 50 ? 'var(--info)' : 'var(--danger)');
+                let meanPwdmColor = rollup.meanPwdm >= 100 ? 'var(--success)' : 'var(--danger)';
+                let clampedMeanPwdm = Math.min(rollup.meanPwdm, 200);
 
                 html += `
                     <div class="task-category">
                         <div class="category-header">
                             <div class="category-title">📁 ${task.name}</div>
                             <div class="category-stats-inline">
-                                <div class="stat-pill" style="border-color:${meanPwdmColor};">Mean PWDM: <b style="color:${meanPwdmColor};">${rollup.meanPwdm}%</b></div>
+                                <!-- Category Header Mean PWDM & Timeline Bar Chart -->
+                                <div class="stat-pill" style="min-width:160px;">
+                                    <div class="chart-label">
+                                        <span><b>Mean PWDM</b></span>
+                                        <span style="color:${meanPwdmColor}; font-weight:bold;">${rollup.meanPwdm}%</span>
+                                    </div>
+                                    <div class="bar-track">
+                                        <div class="bar-pwdm" style="width: ${clampedMeanPwdm}%; background: ${meanPwdmColor};"></div>
+                                    </div>
+                                </div>
+                                <div class="stat-pill" style="font-size:11px;">
+                                    <div>Plan: <b>${rollup.planSpanStr}</b></div>
+                                    <div>Exec: <b>${rollup.execSpanStr}</b></div>
+                                </div>
                                 <div class="stat-pill">Est. Labor: <b>${rollup.totalEstimatedLabor} MD</b></div>
                                 <div class="stat-pill">Exec Labor: <b>${rollup.totalExecLabor} MD</b></div>
-                                <div class="stat-pill">Span: <b>${rollup.earliestStart} to ${rollup.latestEnd}</b></div>
                                 <div class="stat-pill">Eqv Prod: <b>${rollup.equivalentProd}</b></div>
                                 <div class="stat-pill">
                                     Health: <span style="color:var(--success);margin-left:4px;">${rollup.statusCounts.intime + rollup.statusCounts.earlyCompleted} OK</span>
@@ -961,7 +958,6 @@
                             <th style="width:100px;">Unit</th>
                             <th style="width:100px;">Prod (Qty/MD)</th>
                             <th style="width:80px;">Days</th>
-                            <th style="width:80px;">Crew/Day</th>
                             <th style="width:90px; color:var(--primary);">Total Crew (MD)</th>
                             <th style="width:130px;">Start Date</th>
                             <th style="width:130px;">End Date</th>
@@ -999,7 +995,7 @@
                 html += `</thead><tbody>`;
 
                 if (!task.subtasks || task.subtasks.length === 0) {
-                    let colSpan = currentPhase === 3 ? 8 : (currentPhase === 2 ? 8 : 10);
+                    let colSpan = currentPhase === 3 ? 8 : (currentPhase === 2 ? 8 : 9);
                     html += `<tr><td colspan="${colSpan}" class="empty-state">No subtasks added yet.</td></tr>`;
                 } else {
                     task.subtasks.forEach(st => {
@@ -1017,9 +1013,8 @@
                                     <td><input type="number" step="any" value="${st.planQty}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'qty', this.value)"></td>
                                     <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
                                     <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'days', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'crew', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planTotalCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'totalCrew', this.value)" style="border-color:var(--primary); background:#eff6ff;"></td>
+                                    <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)"></td>
+                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="background:#eff6ff;"></td>
                                     <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
                                     <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
                                     ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
@@ -1097,7 +1092,6 @@
                             <td><input type="text" id="subUnit-${task.id}" list="standard-units" placeholder="Unit"></td>
                             <td><input type="number" id="subProd-${task.id}" placeholder="Prod" step="any"></td>
                             <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any"></td>
-                            <td><input type="number" id="subCrew-${task.id}" placeholder="Crw/Day" value="1" step="any"></td>
                             <td><input type="number" id="subTotalCrew-${task.id}" placeholder="Tot Crew" step="any"></td>
                             <td><input type="date" id="subStart-${task.id}"></td>
                             <td><input type="date" id="subEnd-${task.id}"></td>
