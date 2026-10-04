@@ -220,7 +220,7 @@
 
         .category-stats-inline {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             font-size: 13px;
             align-items: center;
             flex-wrap: wrap;
@@ -677,6 +677,8 @@
             sub.dailyQtyLogs.push({ date, qty });
             sub.execQty = sub.dailyQtyLogs.reduce((sum, item) => sum + item.qty, 0);
 
+            updateSubtaskDerivedDates(sub);
+
             dateInput.value = '';
             valInput.value = '';
 
@@ -684,7 +686,7 @@
             renderWorkspace();
         }
 
-        // Add daily crew log entry & automatically derive execution dates (Changes 6 & 7)
+        // Add daily crew log entry & automatically derive execution dates
         async function addDailyCrewLog(mainTaskId, subId) {
             const dateInput = document.getElementById(`logCrewDate-${subId}`);
             const valInput = document.getElementById(`logCrewVal-${subId}`);
@@ -706,7 +708,6 @@
             sub.dailyCrewLogs.push({ date, crew });
             sub.execTotalCrew = sub.dailyCrewLogs.reduce((sum, item) => sum + item.crew, 0);
 
-            // Automatically compute execStart and execEnd from logs (Changes 6 & 7)
             updateSubtaskDerivedDates(sub);
 
             dateInput.value = '';
@@ -729,7 +730,6 @@
                 sub.execStart = '';
             }
 
-            // execEnd strictly locked to the latest date against which crew were entered (Change 7)
             if (sub.dailyCrewLogs && sub.dailyCrewLogs.length > 0) {
                 let crewDates = sub.dailyCrewLogs.map(l => l.date).sort();
                 sub.execEnd = crewDates[crewDates.length - 1];
@@ -867,11 +867,13 @@
             let rollup = {
                 totalEstimatedLabor: 0, totalExecLabor: 0, earliestStart: null, latestEnd: null,
                 totalSubtasks: task.subtasks ? task.subtasks.length : 0,
-                statusCounts: { earlyCompleted: 0, intime: 0, delayed: 0 }
+                statusCounts: { earlyCompleted: 0, intime: 0, delayed: 0 },
+                meanPwdm: 0, meanPerformance: 'On Track'
             };
 
-            if (!task.subtasks) return rollup;
+            if (!task.subtasks || task.subtasks.length === 0) return rollup;
             let totalWeightedProdNumerator = 0, totalDurationSum = 0;
+            let totalPwdmSum = 0;
 
             task.subtasks.forEach(st => {
                 rollup.totalEstimatedLabor += (st.planTotalCrew || 0);
@@ -891,12 +893,16 @@
                     totalDurationSum += st.planDays;
                 }
 
+                let pwdmPercent = st.planQty > 0 ? (st.execQty / st.planQty) * 100 : 0;
+                totalPwdmSum += Math.min(pwdmPercent, 200); // cap runaway numbers for mean
+
                 let stStatus = getSubtaskStatus(st);
                 if (stStatus === 'early-completed') rollup.statusCounts.earlyCompleted++;
                 else if (stStatus === 'intime') rollup.statusCounts.intime++;
                 else if (stStatus === 'delayed') rollup.statusCounts.delayed++;
             });
 
+            rollup.meanPwdm = Math.round(totalPwdmSum / task.subtasks.length);
             rollup.equivalentProd = totalDurationSum > 0 ? (Math.round((totalWeightedProdNumerator / totalDurationSum) * 100) / 100) : 0;
             rollup.earliestStart = rollup.earliestStart ? rollup.earliestStart.toISOString().split('T')[0] : '—';
             rollup.latestEnd = rollup.latestEnd ? rollup.latestEnd.toISOString().split('T')[0] : '—';
@@ -923,12 +929,14 @@
             let html = '';
             tasks.forEach(task => {
                 let rollup = calculateCategoryRollup(task);
+                let meanPwdmColor = rollup.meanPwdm >= 100 ? 'var(--success)' : (rollup.meanPwdm >= 50 ? 'var(--info)' : 'var(--danger)');
 
                 html += `
                     <div class="task-category">
                         <div class="category-header">
                             <div class="category-title">📁 ${task.name}</div>
                             <div class="category-stats-inline">
+                                <div class="stat-pill" style="border-color:${meanPwdmColor};">Mean PWDM: <b style="color:${meanPwdmColor};">${rollup.meanPwdm}%</b></div>
                                 <div class="stat-pill">Est. Labor: <b>${rollup.totalEstimatedLabor} MD</b></div>
                                 <div class="stat-pill">Exec Labor: <b>${rollup.totalExecLabor} MD</b></div>
                                 <div class="stat-pill">Span: <b>${rollup.earliestStart} to ${rollup.latestEnd}</b></div>
@@ -999,7 +1007,6 @@
                         let isReadOnlyPlan = (role === 'assignee');
                         let execProdCalc = (st.execTotalCrew > 0) ? (st.execQty / st.execTotalCrew).toFixed(2) : 0;
                         
-                        // Ensure arrays exist
                         if (!st.dailyQtyLogs) st.dailyQtyLogs = [];
                         if (!st.dailyCrewLogs) st.dailyCrewLogs = [];
 
@@ -1024,7 +1031,6 @@
                                     <td><b>${st.name}</b></td>
                                     <td class="locked-cell" style="font-size:10px;">P: ${st.planStart || '—'} <br>to ${st.planEnd || '—'}</td>
                                     
-                                    <!-- Delivered Qty Dual Cell & Popup Trigger -->
                                     <td>
                                         <div style="margin-bottom:6px;">
                                             Total: <span class="clickable-badge" onclick='showAuditModal("Quantity", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyQtyLogs)})'><b>${st.execQty}</b> ${st.unit}</span>
@@ -1036,7 +1042,6 @@
                                         </div>
                                     </td>
 
-                                    <!-- Crew Dual Cell & Popup Trigger -->
                                     <td>
                                         <div style="margin-bottom:6px;">
                                             Total: <span class="clickable-badge" onclick='showAuditModal("Crew", "${encodeURIComponent(st.name)}", ${JSON.stringify(st.dailyCrewLogs)})'><b>${st.execTotalCrew} MD</b></span>
@@ -1050,7 +1055,6 @@
 
                                     <td class="calc-text">${execProdCalc}</td>
                                     
-                                    <!-- Automatically Derived Actual Start & End Span (Changes 6 & 7) -->
                                     <td class="locked-cell" style="font-size:11px;">
                                         Start: <b>${st.execStart || '—'}</b><br>
                                         End: <b>${st.execEnd || '—'}</b>
