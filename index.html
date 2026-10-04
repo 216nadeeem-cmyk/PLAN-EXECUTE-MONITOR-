@@ -537,11 +537,11 @@
 
             let qty = parseFloat(qtyInput.value) || 0;
             let prod = parseFloat(prodInput.value) || 0;
-            let days = parseFloat(daysInput.value) || 0;
+            let days = parseFloat(daysInput.value) || 1;
             let startDate = startInput.value;
             let endDate = endInput.value;
 
-            // Total Crew is calculated by Qty and Prod
+            // Total Crew = Quantity / Productivity
             let totalCrew = (prod > 0) ? Math.round((qty / prod) * 10) / 10 : 0;
 
             if (startDate && endDate) {
@@ -587,7 +587,7 @@
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
 
-            // Total Crew is calculated by Qty, Days, and Prod (Total Crew = Qty / Prod)
+            // Total Crew is strictly derived as Qty / Prod. Days and Qty/Prod remain stable user inputs.
             if (sub.planProd > 0) {
                 sub.planTotalCrew = Math.round((sub.planQty / sub.planProd) * 10) / 10;
             } else {
@@ -1119,7 +1119,7 @@
                             <td><input type="number" id="subQty-${task.id}" placeholder="Qty" step="any"></td>
                             <td><input type="text" id="subUnit-${task.id}" list="standard-units" placeholder="Unit"></td>
                             <td><input type="number" id="subProd-${task.id}" placeholder="Prod" step="any"></td>
-                            <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any"></td>
+                            <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any" value="1"></td>
                             <td><input type="text" value="Auto" readonly class="locked-cell" style="text-align:center;"></td>
                             <td><input type="date" id="subStart-${task.id}"></td>
                             <td><input type="date" id="subEnd-${task.id}"></td>
