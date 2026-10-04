@@ -529,7 +529,6 @@
             const unitInput = document.getElementById(`subUnit-${mainTaskId}`);
             const prodInput = document.getElementById(`subProd-${mainTaskId}`);
             const daysInput = document.getElementById(`subDays-${mainTaskId}`);
-            const totalCrewInput = document.getElementById(`subTotalCrew-${mainTaskId}`);
             const startInput = document.getElementById(`subStart-${mainTaskId}`);
             const endInput = document.getElementById(`subEnd-${mainTaskId}`);
 
@@ -539,24 +538,17 @@
             let qty = parseFloat(qtyInput.value) || 0;
             let prod = parseFloat(prodInput.value) || 0;
             let days = parseFloat(daysInput.value) || 0;
-            let totalCrew = parseFloat(totalCrewInput.value) || 0;
             let startDate = startInput.value;
             let endDate = endInput.value;
 
-            // Date Span & Days check
+            // Total Crew is calculated by Qty and Prod
+            let totalCrew = (prod > 0) ? Math.round((qty / prod) * 10) / 10 : 0;
+
             if (startDate && endDate) {
                 const diffDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
-                if (diffDays > 0) {
-                    if (days > 0 && diffDays < days) {
-                        alert(`Notice: Calendar span (${diffDays} days) is shorter than required work days (${days}). Please extend dates or reduce crew.`);
-                    }
+                if (diffDays > 0 && days > 0 && diffDays < days) {
+                    alert(`Notice: Calendar span (${diffDays} days) is shorter than estimated work days (${days}). Please extend dates.`);
                 }
-            }
-
-            if (totalCrew === 0 && days > 0 && prod > 0) {
-                totalCrew = qty / prod;
-            } else if (days === 0 && totalCrew > 0 && prod > 0) {
-                days = totalCrew / prod; // or derived
             }
 
             const task = tasks.find(t => t.id === mainTaskId);
@@ -568,7 +560,7 @@
                     unit: unitInput.value.trim() || 'Units',
                     planProd: prod,
                     planDays: Math.round(days * 10) / 10,
-                    planTotalCrew: Math.round(totalCrew * 10) / 10,
+                    planTotalCrew: totalCrew,
                     planStart: startDate,
                     planEnd: endDate,
                     execQty: 0,
@@ -595,22 +587,18 @@
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
 
-            // Flexible Days vs Total Crew recalculation
-            if (field === 'planTotalCrew') {
-                if (sub.planProd > 0) {
-                    sub.planDays = Math.round((sub.planTotalCrew / sub.planProd) * 10) / 10;
-                }
-            } else if (field === 'planDays') {
-                if (sub.planProd > 0) {
-                    sub.planTotalCrew = Math.round((sub.planDays * sub.planProd) * 10) / 10;
-                }
+            // Total Crew is calculated by Qty, Days, and Prod (Total Crew = Qty / Prod)
+            if (sub.planProd > 0) {
+                sub.planTotalCrew = Math.round((sub.planQty / sub.planProd) * 10) / 10;
+            } else {
+                sub.planTotalCrew = 0;
             }
 
-            // Calendar span validation against Days
+            // Check calendar span vs estimation days
             if (sub.planStart && sub.planEnd) {
                 const diffDays = Math.ceil((new Date(sub.planEnd) - new Date(sub.planStart)) / (1000 * 60 * 60 * 24)) + 1;
                 if (diffDays > 0 && diffDays < sub.planDays) {
-                    alert(`Warning: Calendar span (${diffDays} days) is shorter than required days (${sub.planDays}). Please extend start/end dates or adjust total crew.`);
+                    alert(`Warning: Calendar span (${diffDays} days) is shorter than estimated days (${sub.planDays}). Please extend start/end dates.`);
                 }
             }
 
@@ -1054,7 +1042,7 @@
                                     <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
                                     <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
                                     <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planTotalCrew}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planTotalCrew', this.value)" style="border-color:var(--primary); background:#eff6ff;"></td>
+                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="border-color:var(--primary); background:#eff6ff;" title="Auto-calculated from Qty and Prod"></td>
                                     <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
                                     <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
                                     ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
@@ -1132,7 +1120,7 @@
                             <td><input type="text" id="subUnit-${task.id}" list="standard-units" placeholder="Unit"></td>
                             <td><input type="number" id="subProd-${task.id}" placeholder="Prod" step="any"></td>
                             <td><input type="number" id="subDays-${task.id}" placeholder="Days" step="any"></td>
-                            <td><input type="number" id="subTotalCrew-${task.id}" placeholder="Tot Crew" step="any"></td>
+                            <td><input type="text" value="Auto" readonly class="locked-cell" style="text-align:center;"></td>
                             <td><input type="date" id="subStart-${task.id}"></td>
                             <td><input type="date" id="subEnd-${task.id}"></td>
                             <td>
