@@ -568,8 +568,6 @@
                     execTotalCrew: 0,
                     dailyQtyLogs: [],
                     dailyCrewLogs: [],
-                    execStart: '',
-                    execEnd: '',
                     assignee: employeesList[0]
                 });
                 await syncToCloud();
@@ -647,17 +645,12 @@
             renderWorkspace();
         }
 
-        async function updateSubtaskExec(mainTaskId, subId, field, value) {
+        async function updateSubtaskAssignee(mainTaskId, subId, value) {
             const task = tasks.find(t => t.id === mainTaskId);
             if (!task) return;
             const sub = task.subtasks.find(st => st.id === subId);
             if (!sub) return;
-            
-            if (['assignee', 'execStart', 'execEnd'].includes(field)) {
-                sub[field] = value;
-            } else {
-                sub[field] = parseFloat(value) || 0;
-            }
+            sub.assignee = value;
             await syncToCloud();
             renderWorkspace();
         }
@@ -691,7 +684,7 @@
             renderWorkspace();
         }
 
-        // Add daily crew log entry
+        // Add daily crew log entry & automatically derive execution dates (Changes 6 & 7)
         async function addDailyCrewLog(mainTaskId, subId) {
             const dateInput = document.getElementById(`logCrewDate-${subId}`);
             const valInput = document.getElementById(`logCrewVal-${subId}`);
@@ -713,11 +706,36 @@
             sub.dailyCrewLogs.push({ date, crew });
             sub.execTotalCrew = sub.dailyCrewLogs.reduce((sum, item) => sum + item.crew, 0);
 
+            // Automatically compute execStart and execEnd from logs (Changes 6 & 7)
+            updateSubtaskDerivedDates(sub);
+
             dateInput.value = '';
             valInput.value = '';
 
             await syncToCloud();
             renderWorkspace();
+        }
+
+        // Helper to derive actual start and end dates from logs
+        function updateSubtaskDerivedDates(sub) {
+            let allDates = [];
+            if (sub.dailyQtyLogs) sub.dailyQtyLogs.forEach(l => allDates.push(l.date));
+            if (sub.dailyCrewLogs) sub.dailyCrewLogs.forEach(l => allDates.push(l.date));
+
+            if (allDates.length > 0) {
+                allDates.sort();
+                sub.execStart = allDates[0];
+            } else {
+                sub.execStart = '';
+            }
+
+            // execEnd strictly locked to the latest date against which crew were entered (Change 7)
+            if (sub.dailyCrewLogs && sub.dailyCrewLogs.length > 0) {
+                let crewDates = sub.dailyCrewLogs.map(l => l.date).sort();
+                sub.execEnd = crewDates[crewDates.length - 1];
+            } else {
+                sub.execEnd = '';
+            }
         }
 
         // Show audit logs popup modal
@@ -950,8 +968,7 @@
                             <th style="min-width:200px;">Delivered Qty (Sum & Date-wise)</th>
                             <th style="min-width:200px;">Crew / Labor (Sum & Date-wise)</th>
                             <th style="color:var(--info); width:80px;">Exec Prod</th>
-                            <th style="width:120px;">Actual Start</th>
-                            <th style="width:120px;">Actual End</th>
+                            <th style="width:130px;">Auto Start / End Span</th>
                             <th style="width:130px;">Assignee</th>
                             <th style="width:140px;">Status</th>
                         </tr>
@@ -974,7 +991,7 @@
                 html += `</thead><tbody>`;
 
                 if (!task.subtasks || task.subtasks.length === 0) {
-                    let colSpan = currentPhase === 3 ? 8 : (currentPhase === 2 ? 9 : 10);
+                    let colSpan = currentPhase === 3 ? 8 : (currentPhase === 2 ? 8 : 10);
                     html += `<tr><td colspan="${colSpan}" class="empty-state">No subtasks added yet.</td></tr>`;
                 } else {
                     task.subtasks.forEach(st => {
@@ -1032,10 +1049,15 @@
                                     </td>
 
                                     <td class="calc-text">${execProdCalc}</td>
-                                    <td><input type="date" value="${st.execStart || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execStart', this.value)"></td>
-                                    <td><input type="date" value="${st.execEnd || ''}" onchange="updateSubtaskExec(${task.id}, ${st.id}, 'execEnd', this.value)"></td>
+                                    
+                                    <!-- Automatically Derived Actual Start & End Span (Changes 6 & 7) -->
+                                    <td class="locked-cell" style="font-size:11px;">
+                                        Start: <b>${st.execStart || '—'}</b><br>
+                                        End: <b>${st.execEnd || '—'}</b>
+                                    </td>
+
                                     <td>
-                                        <select onchange="updateSubtaskExec(${task.id}, ${st.id}, 'assignee', this.value)">
+                                        <select onchange="updateSubtaskAssignee(${task.id}, ${st.id}, this.value)">
                                             <option value="${st.assignee}">${st.assignee}</option>
                                             ${assigneeOptions}
                                         </select>
