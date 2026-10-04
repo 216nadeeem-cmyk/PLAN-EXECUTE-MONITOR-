@@ -541,8 +541,8 @@
             let startDate = startInput.value;
             let endDate = endInput.value;
 
-            // Total Crew = (Quantity / Productivity) scaled by Days if applicable
-            let totalCrew = (prod > 0) ? Math.round(((qty / prod) * (days > 0 ? days : 1)) * 10) / 10 : 0;
+            // Apply User Formula: Total Crew (MD) = (Productivity * Days) / Quantity
+            let totalCrew = (qty > 0) ? Math.round(((prod * days) / qty) * 10) / 10 : 0;
 
             if (startDate && endDate) {
                 const diffDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
@@ -587,9 +587,9 @@
                 sub[`plan${field.charAt(0).toUpperCase() + field.slice(1)}`] = parseFloat(value) || 0;
             }
 
-            // Recalculate Total Crew using Qty, Prod, and Days
-            if (sub.planProd > 0) {
-                sub.planTotalCrew = Math.round(((sub.planQty / sub.planProd) * (sub.planDays > 0 ? sub.planDays : 1)) * 10) / 10;
+            // Apply User Formula: Total Crew (MD) = (Productivity * Days) / Quantity
+            if (sub.planQty > 0) {
+                sub.planTotalCrew = Math.round(((sub.planProd * sub.planDays) / sub.planQty) * 10) / 10;
             } else {
                 sub.planTotalCrew = 0;
             }
@@ -1042,7 +1042,7 @@
                                     <td><input type="text" list="standard-units" value="${st.unit}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'unit', this.value)"></td>
                                     <td><input type="number" step="any" value="${st.planProd}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'prod', this.value)"></td>
                                     <td><input type="number" step="any" value="${st.planDays}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planDays', this.value)"></td>
-                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="border-color:var(--primary); background:#eff6ff;" title="Auto-calculated from Qty, Prod, and Days"></td>
+                                    <td><input type="number" step="any" value="${st.planTotalCrew}" readonly class="locked-cell" style="border-color:var(--primary); background:#eff6ff;" title="Calculated as (Productivity * Days) / Quantity"></td>
                                     <td><input type="date" value="${st.planStart || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planStart', this.value)"></td>
                                     <td><input type="date" value="${st.planEnd || ''}" ${isReadOnlyPlan ? 'readonly class="locked-cell"' : ''} onchange="updateSubtaskPlan(${task.id}, ${st.id}, 'planEnd', this.value)"></td>
                                     ${role !== 'assignee' ? `<td><button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSubtask(${task.id},${st.id})">X</button></td>` : ''}
